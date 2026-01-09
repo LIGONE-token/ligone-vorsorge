@@ -5,16 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
    Realistisch | Tages-Schlusskurse | localStorage
 ===================================================== */
 
-/* ================== KONFIG ================== */
-
 const STORAGE_KEY = "ligone_simulation_v1";
 
-/*
-  HINWEIS:
-  lastDailyClose & lastDailyCloseDate kommen später
-  aus einer echten Quelle (Cron / Supabase).
-  Aktuell Platzhalter, damit alles sauber läuft.
-*/
+/* ================== KURSSTATUS ================== */
+
 let lastDailyClose = null;       // number
 let lastDailyCloseDate = null;   // "YYYY-MM-DD"
 
@@ -57,12 +51,10 @@ function formatPrice(v) {
   });
 }
 
-/* =====================================================
-   localStorage
-===================================================== */
+/* ================== localStorage ================== */
 
 function saveSimulation() {
-  const data = {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
     investmentAmount,
     entryPrice,
     entryDate,
@@ -70,32 +62,31 @@ function saveSimulation() {
     priceHistory,
     lastDailyClose,
     lastDailyCloseDate
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }));
 }
-
 
 function loadSimulation() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return false;
 
   try {
-    const data = JSON.parse(raw);
+    const d = JSON.parse(raw);
 
-    investmentAmount   = data.investmentAmount;
-    entryPrice         = data.entryPrice;
-    entryDate          = data.entryDate;
-    tokenAmount        = data.tokenAmount;
-    priceHistory       = data.priceHistory || [];
-    lastDailyClose     = data.lastDailyClose;
-    lastDailyCloseDate = data.lastDailyCloseDate;
+    investmentAmount   = d.investmentAmount;
+    entryPrice         = d.entryPrice;
+    entryDate          = d.entryDate;
+    tokenAmount        = d.tokenAmount;
+    priceHistory       = d.priceHistory || [];
+    lastDailyClose     = d.lastDailyClose;
+    lastDailyCloseDate = d.lastDailyCloseDate;
 
-    startStatus.textContent = "Aktiv (lokal gespeichert)";
+    startStatus.textContent =
+      "Aktiv · letzter Schlusskurs vom " + lastDailyCloseDate;
 
     updateResult();
     updateChart();
-
     return true;
+
   } catch (e) {
     console.error("Simulation konnte nicht geladen werden", e);
     return false;
@@ -107,27 +98,15 @@ window.resetSimulation = function () {
   location.reload();
 };
 
-/* =====================================================
-   KURSQUELLE (PLATZHALTER)
-===================================================== */
+/* ================== KURSQUELLE (PLATZHALTER) ================== */
 
-/*
-  Diese Funktion wird später durch echte Daten ersetzt.
-  Sie MUSS liefern:
-  - lastDailyClose
-  - lastDailyCloseDate
-*/
 async function loadLatestDailyClose() {
-
-  // ⚠️ TEMPORÄRER DEMO-WERT
+  // ⚠️ DEMO / PLATZHALTER – wird später durch echte Tages-Closes ersetzt
   lastDailyClose = 0.00000123;
   lastDailyCloseDate = today;
-
 }
 
-/* =====================================================
-   EINSTIEG (Button-Klick)
-===================================================== */
+/* ================== EINSTIEG ================== */
 
 amountButtons.forEach(btn => {
   btn.addEventListener("click", async () => {
@@ -135,42 +114,41 @@ amountButtons.forEach(btn => {
     const amount = Number(btn.dataset.amount);
     if (!amount) return;
 
-    // Schlusskurs laden (falls noch nicht vorhanden)
     if (!lastDailyClose) {
       await loadLatestDailyClose();
     }
 
-    // Noch kein Tagesabschluss → warten
+    // ❗ RICHTIGER STATUS, solange kein Schlusskurs existiert
     if (!lastDailyClose || !lastDailyCloseDate) {
       startStatus.textContent =
-        "Noch kein Tages-Schlusskurs verfügbar";
+        "Wartet auf nächsten Tages-Schlusskurs";
       return;
     }
 
-    // Einstieg NUR EINMAL setzen
+    // Einstieg nur einmal
     if (!entryPrice) {
-  investmentAmount = amount;
-  entryPrice = lastDailyClose;
-  entryDate  = lastDailyCloseDate;
-  tokenAmount = investmentAmount / entryPrice;
+      investmentAmount = amount;
+      entryPrice = lastDailyClose;
+      entryDate  = lastDailyCloseDate;
+      tokenAmount = investmentAmount / entryPrice;
 
-  priceHistory.push({
-    date: entryDate,
-    close: entryPrice
-  });
+      priceHistory.push({
+        date: entryDate,
+        close: entryPrice
+      });
 
-  startStatus.textContent = "Aktiv (Einstieg erfolgt)";
-  saveSimulation();
-}
+      startStatus.textContent =
+        "Aktiv · Einstieg zum Schlusskurs vom " + entryDate;
+
+      saveSimulation();
+    }
 
     updateResult();
     updateChart();
   });
 });
 
-/* =====================================================
-   ANZEIGE
-===================================================== */
+/* ================== ANZEIGE ================== */
 
 function updateResult() {
   if (!entryPrice) return;
@@ -185,7 +163,9 @@ function updateResult() {
     ((currentValue - investmentAmount) / investmentAmount) * 100;
 
   $("res-current-price").textContent =
-    formatPrice(lastDailyClose) + " (letzter Schlusskurs)";
+    formatPrice(lastDailyClose) +
+    " (Schlusskurs vom " + lastDailyCloseDate + ")";
+
   $("res-value").textContent = formatEUR(currentValue);
   $("res-change").textContent =
     (changePct >= 0 ? "+" : "") +
@@ -194,14 +174,11 @@ function updateResult() {
   resultSection.hidden = false;
 }
 
-/* =====================================================
-   CHART – erst ab 2 Schlusskursen
-===================================================== */
+/* ================== CHART ================== */
 
 let chart = null;
 
 function updateChart() {
-
   if (priceHistory.length < 2) {
     chartSection.hidden = true;
     return;
@@ -213,40 +190,29 @@ function updateChart() {
     .getElementById("investmentChart")
     .getContext("2d");
 
-  const labels = priceHistory.map(p => p.date);
-  const values = priceHistory.map(p =>
-    tokenAmount * p.close
-  );
-
   if (chart) chart.destroy();
 
   chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels,
+      labels: priceHistory.map(p => p.date),
       datasets: [{
-        data: values,
+        data: priceHistory.map(p => tokenAmount * p.close),
         tension: 0.3
       }]
     },
     options: {
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         y: {
-          ticks: {
-            callback: v => formatEUR(v)
-          }
+          ticks: { callback: v => formatEUR(v) }
         }
       }
     }
   });
 }
 
-/* =====================================================
-   BEIM SEITENSTART: gespeicherte Simulation laden
-===================================================== */
+/* ================== INIT ================== */
 
 loadSimulation();
 
