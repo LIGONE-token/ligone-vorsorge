@@ -2,25 +2,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* =====================================================
    LIGONE – Investitionssimulation (FINAL)
-   Modell: Echtstart, Tages-Schlusskurse, kein Rückblick
+   Realistisch | Tages-Schlusskurse | localStorage
 ===================================================== */
 
-/* ====== KONFIG ====== */
+/* ================== KONFIG ================== */
 
-// HIER später echte Quelle einsetzen (z. B. Supabase / Cron)
-// Aktuell: Platzhalter für letzten bekannten Tages-Schlusskurs
+const STORAGE_KEY = "ligone_simulation_v1";
+
+/*
+  HINWEIS:
+  lastDailyClose & lastDailyCloseDate kommen später
+  aus einer echten Quelle (Cron / Supabase).
+  Aktuell Platzhalter, damit alles sauber läuft.
+*/
 let lastDailyClose = null;       // number
 let lastDailyCloseDate = null;   // "YYYY-MM-DD"
 
-// gespeicherter Verlauf ab Einstieg
-let priceHistory = []; // [{ date, close }]
+/* ================== INVESTMENT-STATUS ================== */
 
-// Investment-Zustand
-let investmentAmount = null;
-let entryPrice = null;
-let entryDate = null;
-let tokenAmount = null;
-const STORAGE_KEY = "ligone_simulation_v1";
+let investmentAmount = null; // €
+let entryPrice = null;       // Schlusskurs
+let entryDate = null;        // Datum des Schlusskurses
+let tokenAmount = null;      // LIGONE-Token
+let priceHistory = [];       // [{ date, close }]
+
+/* ================== DOM ================== */
+
+const $ = id => document.getElementById(id);
+
+const startDateDisplay = $("startDateDisplay");
+const startStatus      = $("startStatus");
+const resultSection    = document.querySelector(".simulation-result");
+const chartSection     = document.querySelector(".simulation-chart");
+const amountButtons    = document.querySelectorAll(".amount-buttons button");
+
+/* ================== STARTDATUM = HEUTE ================== */
+
+const today = new Date().toISOString().slice(0, 10);
+startDateDisplay.textContent = today;
+
+/* ================== FORMAT ================== */
+
+function formatEUR(v) {
+  return Number(v).toLocaleString("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + " €";
+}
+
+function formatPrice(v) {
+  return Number(v).toLocaleString("de-DE", {
+    minimumFractionDigits: 8,
+    maximumFractionDigits: 8
+  });
+}
+
+/* =====================================================
+   localStorage
+===================================================== */
 
 function saveSimulation() {
   const data = {
@@ -58,68 +97,31 @@ function loadSimulation() {
   }
 }
 
-function resetSimulation() {
+window.resetSimulation = function () {
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
-}
-
-   
-/* ====== ELEMENTE ====== */
-const $ = id => document.getElementById(id);
-
-const startDateDisplay = $("startDateDisplay");
-const startStatus      = $("startStatus");
-
-const resultSection = document.querySelector(".simulation-result");
-const chartSection  = document.querySelector(".simulation-chart");
-
-const amountButtons = document.querySelectorAll(".amount-buttons button");
-
-/* ====== STARTDATUM = HEUTE ====== */
-const today = new Date().toISOString().slice(0, 10);
-startDateDisplay.textContent = today;
-
-/* ====== FORMAT ====== */
-function formatEUR(v) {
-  return Number(v).toLocaleString("de-DE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }) + " €";
-}
-
-function formatPrice(v) {
-  return Number(v).toLocaleString("de-DE", {
-    minimumFractionDigits: 8,
-    maximumFractionDigits: 8
-  });
-}
+};
 
 /* =====================================================
-   KURSLOGIK (REALISTISCH)
-   - Es gibt nur Tages-Schlusskurse
-   - Einstieg erst, wenn ein Close existiert
+   KURSQUELLE (PLATZHALTER)
 ===================================================== */
 
 /*
-  Diese Funktion MUSS später durch echte Daten ersetzt werden.
-  Erwartet:
-  - close: number
-  - date:  YYYY-MM-DD
+  Diese Funktion wird später durch echte Daten ersetzt.
+  Sie MUSS liefern:
+  - lastDailyClose
+  - lastDailyCloseDate
 */
 async function loadLatestDailyClose() {
-  /*
-    BEISPIEL (Platzhalter):
-    lastDailyClose = 0.00000123;
-    lastDailyCloseDate = "2026-02-03";
-  */
 
-  // --- TEMPORÄRER DEMO-WERT ---
+  // ⚠️ TEMPORÄRER DEMO-WERT
   lastDailyClose = 0.00000123;
   lastDailyCloseDate = today;
+
 }
 
 /* =====================================================
-   INVESTMENT START
+   EINSTIEG (Button-Klick)
 ===================================================== */
 
 amountButtons.forEach(btn => {
@@ -128,19 +130,19 @@ amountButtons.forEach(btn => {
     const amount = Number(btn.dataset.amount);
     if (!amount) return;
 
-    // Kurs laden (falls noch nicht vorhanden)
+    // Schlusskurs laden (falls noch nicht vorhanden)
     if (!lastDailyClose) {
       await loadLatestDailyClose();
     }
 
-    // Wenn immer noch kein Schlusskurs da ist → warten
+    // Noch kein Tagesabschluss → warten
     if (!lastDailyClose || !lastDailyCloseDate) {
       startStatus.textContent =
         "Noch kein Tages-Schlusskurs verfügbar";
       return;
     }
 
-    // Einstieg nur EINMAL setzen
+    // Einstieg NUR EINMAL setzen
     if (!entryPrice) {
       investmentAmount = amount;
       entryPrice = lastDailyClose;
@@ -153,6 +155,7 @@ amountButtons.forEach(btn => {
       });
 
       startStatus.textContent = "Aktiv (Einstieg erfolgt)";
+      saveSimulation();
     }
 
     updateResult();
@@ -165,6 +168,8 @@ amountButtons.forEach(btn => {
 ===================================================== */
 
 function updateResult() {
+  if (!entryPrice) return;
+
   $("res-amount").textContent = formatEUR(investmentAmount);
   $("res-buy-price").textContent =
     formatPrice(entryPrice) + " (Schlusskurs)";
@@ -185,12 +190,13 @@ function updateResult() {
 }
 
 /* =====================================================
-   CHART (erst ab 2 Schlusskursen)
+   CHART – erst ab 2 Schlusskursen
 ===================================================== */
 
 let chart = null;
 
 function updateChart() {
+
   if (priceHistory.length < 2) {
     chartSection.hidden = true;
     return;
@@ -232,5 +238,11 @@ function updateChart() {
     }
   });
 }
+
+/* =====================================================
+   BEIM SEITENSTART: gespeicherte Simulation laden
+===================================================== */
+
+loadSimulation();
 
 });
