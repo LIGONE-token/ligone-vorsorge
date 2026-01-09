@@ -149,19 +149,19 @@ amountButtons.forEach(btn => {
 
     // Einstieg NUR EINMAL setzen
     if (!entryPrice) {
-      investmentAmount = amount;
-      entryPrice = lastDailyClose;
-      entryDate  = lastDailyCloseDate;
-      tokenAmount = investmentAmount / entryPrice;
+  investmentAmount = amount;
+  entryPrice = lastDailyClose;
+  entryDate  = lastDailyCloseDate;
+  tokenAmount = investmentAmount / entryPrice;
 
-      priceHistory.push({
-        date: entryDate,
-        close: entryPrice
-      });
+  priceHistory.push({
+    date: entryDate,
+    close: entryPrice
+  });
 
-      startStatus.textContent = "Aktiv (Einstieg erfolgt)";
-      saveSimulation();
-    }
+  startStatus.textContent = "Aktiv (Einstieg erfolgt)";
+  saveSimulation();
+}
 
     updateResult();
     updateChart();
