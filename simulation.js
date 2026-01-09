@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 <script>
 /* =====================================================
    LIGONE – Simulation (Basis-Logik)
@@ -108,3 +110,4 @@ function drawChart(amount) {
   });
 }
 </script>
+});
