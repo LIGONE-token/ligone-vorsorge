@@ -20,7 +20,50 @@ let investmentAmount = null;
 let entryPrice = null;
 let entryDate = null;
 let tokenAmount = null;
+const STORAGE_KEY = "ligone_simulation_v1";
 
+function saveSimulation() {
+  const data = {
+    investmentAmount,
+    entryPrice,
+    entryDate,
+    tokenAmount,
+    priceHistory
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadSimulation() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
+
+  try {
+    const data = JSON.parse(raw);
+
+    investmentAmount = data.investmentAmount;
+    entryPrice       = data.entryPrice;
+    entryDate        = data.entryDate;
+    tokenAmount      = data.tokenAmount;
+    priceHistory     = data.priceHistory || [];
+
+    startStatus.textContent = "Aktiv (lokal gespeichert)";
+
+    updateResult();
+    updateChart();
+
+    return true;
+  } catch (e) {
+    console.error("Simulation konnte nicht geladen werden", e);
+    return false;
+  }
+}
+
+function resetSimulation() {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+   
 /* ====== ELEMENTE ====== */
 const $ = id => document.getElementById(id);
 
