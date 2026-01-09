@@ -8,22 +8,26 @@ const supabase = createClient(
 const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
+  // ✅ DEINE TOKEN-ADRESSE (ohne Klammern, ohne Zusätze)
   const TOKEN_ADDRESS = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
 
-const res = await fetch(
-  `https://api.dexscreener.com/latest/dex/tokens/${TOKEN_ADDRESS}`
-);
-const data = await res.json();
+  // ✅ DexScreener TOKEN-Endpoint (richtig!)
+  const res = await fetch(
+    `https://api.dexscreener.com/latest/dex/tokens/${TOKEN_ADDRESS}`
+  );
+  const data = await res.json();
 
-const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
-if (!priceUsd) {
-  throw new Error("Preis konnte nicht geladen werden");
-}
+  // ✅ Preis aus dem liquidesten Pair
+  const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
+  if (!priceUsd) {
+    throw new Error("Preis konnte nicht geladen werden");
+  }
 
-
-  const EUR_RATE = 0.92; // konservativ
+  // konservative USD → EUR Umrechnung
+  const EUR_RATE = 0.92;
   const price = priceUsd * EUR_RATE;
 
+  // prüfen, ob heutiger Preis schon existiert
   const { data: existing } = await supabase
     .from("ligone_prices")
     .select("date")
@@ -35,6 +39,7 @@ if (!priceUsd) {
     return;
   }
 
+  // speichern
   const { error } = await supabase.from("ligone_prices").insert({
     date: today,
     price_eur: price,
