@@ -67,10 +67,13 @@ function saveSimulation() {
     entryPrice,
     entryDate,
     tokenAmount,
-    priceHistory
+    priceHistory,
+    lastDailyClose,
+    lastDailyCloseDate
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
+
 
 function loadSimulation() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -79,11 +82,13 @@ function loadSimulation() {
   try {
     const data = JSON.parse(raw);
 
-    investmentAmount = data.investmentAmount;
-    entryPrice       = data.entryPrice;
-    entryDate        = data.entryDate;
-    tokenAmount      = data.tokenAmount;
-    priceHistory     = data.priceHistory || [];
+    investmentAmount   = data.investmentAmount;
+    entryPrice         = data.entryPrice;
+    entryDate          = data.entryDate;
+    tokenAmount        = data.tokenAmount;
+    priceHistory       = data.priceHistory || [];
+    lastDailyClose     = data.lastDailyClose;
+    lastDailyCloseDate = data.lastDailyCloseDate;
 
     startStatus.textContent = "Aktiv (lokal gespeichert)";
 
