@@ -2,18 +2,11 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Investitionsverlauf verstehen | LIGONE</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta name="descr<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
   <title>Investitionsverlauf ab Start | LIGONE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <meta name="description"
-        content="Erlebe realistisch, wie sich eine Investition ab deinem Start entwickelt – auf Basis echter Tages-Schlusskurse. Keine Rückrechnung. Keine Prognose.">
+        content="Erlebe realistisch, wie sich ein LIGONE-Token-Kauf ab deinem Start entwickelt – auf Basis offizieller Tages-Schlusskurse. Keine Rückrechnung. Keine Prognose.">
 
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -24,31 +17,29 @@
   <!-- ===================== HEAD ===================== -->
   <header class="simulation-head">
     <h1>Investitionsverlauf ab deinem Start</h1>
-    <p class="subtitle">
-      Diese Simulation begleitet eine Investition so,
-      wie sie sich mit echtem Geld entwickeln würde.
-    </p>
-    <p class="token-hint">
-  Diese Simulation bezieht sich ausschließlich auf den Kauf von
-  <strong>LIGONE-Token (LIG1)</strong>.
-  Es handelt sich nicht um ein klassisches Finanz- oder Vorsorgeprodukt.
-</p>
 
+    <p class="subtitle">
+      Diese Simulation begleitet einen Token-Kauf so,
+      wie er sich mit echtem Geld entwickeln würde.
+    </p>
+
+    <p class="token-hint">
+      Diese Simulation bezieht sich ausschließlich auf den Kauf von
+      <strong>LIGONE-Token (LIG1)</strong>.
+      Es handelt sich nicht um ein klassisches Finanz- oder Vorsorgeprodukt.
+    </p>
   </header>
 
   <!-- ===================== GRUNDHINWEIS ===================== -->
   <section class="simulation-note">
-  <p>
-    <strong>Wichtig:</strong><br>
-    Diese Simulation zeigt die mögliche Entwicklung eines
-    <strong>LIGONE-Token-Kaufs</strong> auf Basis realer Tages-Schlusskurse.
-    <br>
-    LIGONE ist ein Krypto-Token und kein Finanzprodukt,
-    keine Geldanlage im klassischen Sinn
-    und keine Anlageberatung.
-  </p>
-</section>
-
+    <p>
+      <strong>Wichtig:</strong><br>
+      Diese Simulation zeigt die mögliche Entwicklung eines
+      <strong>LIGONE-Token-Kaufs</strong> auf Basis realer Tages-Schlusskurse.
+      LIGONE ist ein Krypto-Token. <br>
+      Keine Anlageberatung. Keine Prognose. Eigenverantwortliche Entscheidung.
+    </p>
+  </section>
 
   <!-- ===================== STARTINFO ===================== -->
   <section class="start-info">
@@ -126,8 +117,7 @@
   <section class="simulation-footer">
     <p>
       Du kannst diese Simulation jederzeit nutzen, ohne etwas zu kaufen.
-      Sie dient ausschließlich dem realistischen Verständnis
-      von Investitionsverläufen.
+      Sie dient ausschließlich dem realistischen Verständnis von Token-Verläufen.
     </p>
   </section>
 
@@ -138,104 +128,6 @@
 
 <!-- Simulation-Logik -->
 <script src="simulation.js"></script>
-
-</body>
-</html>
-iption"
-        content="Verfolge, wie sich kleine Beträge auf Basis realer LIGONE-Kurse entwickelt hätten. Keine Prognose. Keine Anlageberatung.">
-
-  <link rel="stylesheet" href="assets/style.css">
-</head>
-<body>
-
-<main class="simulation">
-
-  <!-- ===================== HEAD ===================== -->
-  <header class="simulation-head">
-    <h1>Investitionsverlauf verstehen</h1>
-    <p class="subtitle">
-      Rückblickende Berechnung auf Basis realer historischer LIGONE-Kurse
-    </p>
-  </header>
-
-  <!-- ===================== HINWEIS ===================== -->
-  <section class="simulation-note">
-    <p>
-      <strong>Hinweis:</strong>
-      Diese Simulation stellt keine Anlageberatung dar und macht
-      keine Aussage über zukünftige Entwicklungen.
-      Sie zeigt ausschließlich eine rückblickende Berechnung
-      auf Basis verfügbarer Kursdaten.
-    </p>
-  </section>
-
-  <!-- ===================== BETRAG ===================== -->
-  <section class="amount-select">
-  <h2>Betrag auswählen</h2>
-
-  <div class="amount-buttons">
-    <button type="button" data-amount="5">5 €</button>
-    <button type="button" data-amount="10">10 €</button>
-    <button type="button" data-amount="50">50 €</button>
-    <button type="button" data-amount="100">100 €</button>
-  </div>
-</section>
-
-
-  <!-- ===================== ERGEBNIS ===================== -->
-  <section class="simulation-result" hidden>
-    <h2>Dein hypothetischer Verlauf</h2>
-
-    <div class="result-grid">
-
-      <div class="result-block">
-        <h3>Investition</h3>
-        <ul>
-          <li>Investiert: <strong id="res-amount">–</strong></li>
-          <li>Kaufdatum: <strong id="res-date">–</strong></li>
-          <li>Kaufkurs: <strong id="res-buy-price">–</strong></li>
-        </ul>
-      </div>
-
-      <div class="result-block">
-        <h3>Aktueller Stand</h3>
-        <ul>
-          <li>Aktueller Kurs: <strong id="res-current-price">–</strong></li>
-          <li>Aktueller Wert: <strong id="res-value">–</strong></li>
-          <li>Veränderung: <strong id="res-change">–</strong></li>
-        </ul>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ===================== CHART ===================== -->
-  <section class="simulation-chart" hidden>
-    <h2>Verlauf über die Zeit</h2>
-    <p class="chart-note">
-      Darstellung des Investitionswertes auf Basis realer Kursdaten.
-    </p>
-
-    <div class="chart-wrapper">
-      <canvas id="investmentChart"></canvas>
-    </div>
-  </section>
-
-  <!-- ===================== ABSCHLUSS ===================== -->
-  <section class="simulation-footer">
-    <p>
-      Du kannst diese Simulation jederzeit nutzen, ohne etwas zu kaufen.
-      Sie dient ausschließlich dem besseren Verständnis von Kursverläufen.
-    </p>
-  </section>
-
-</main>
-  <!-- Chart.js (für die Verlaufsgrafik) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Simulation-Logik -->
-  <script src="simulation.js"></script>
-</body>
-</html>
 
 </body>
 </html>
