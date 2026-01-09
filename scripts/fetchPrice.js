@@ -8,17 +8,18 @@ const supabase = createClient(
 const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
-  const PAIR_ADDRESS = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
+  const TOKEN_ADDRESS = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
 
-  const res = await fetch(
-    `https://api.dexscreener.com/latest/dex/pairs/polygon/${PAIR_ADDRESS}`
-  );
-  const data = await res.json();
+const res = await fetch(
+  `https://api.dexscreener.com/latest/dex/tokens/${TOKEN_ADDRESS}`
+);
+const data = await res.json();
 
-  const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
-  if (!priceUsd) {
-    throw new Error("Preis konnte nicht geladen werden");
-  }
+const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
+if (!priceUsd) {
+  throw new Error("Preis konnte nicht geladen werden");
+}
+
 
   const EUR_RATE = 0.92; // konservativ
   const price = priceUsd * EUR_RATE;
