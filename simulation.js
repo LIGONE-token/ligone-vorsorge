@@ -1,15 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-<script>
 /* =====================================================
    LIGONE – Simulation (Basis-Logik)
-   Kein Forecast | Keine Anlageberatung
 ===================================================== */
 
-/* ====== DEMO / PLATZHALTER KURSDATEN ======
-   Struktur: [{ date: "YYYY-MM-DD", price: number }]
-   → später problemlos durch API ersetzen
-*/
+/* ====== TEST-KURSDATEN ====== */
 const priceHistory = [
   { date: "2025-12-01", price: 0.00000110 },
   { date: "2025-12-10", price: 0.00000118 },
@@ -40,34 +35,37 @@ const amountButtons = document.querySelectorAll(".amount-buttons button");
 const resultSection = document.querySelector(".simulation-result");
 const chartSection  = document.querySelector(".simulation-chart");
 
+/* ====== SICHERHEIT ====== */
+if (!amountButtons.length) {
+  console.error("❌ Keine Betrag-Buttons gefunden");
+  return;
+}
+
 /* ====== LOGIK ====== */
 amountButtons.forEach(btn => {
   btn.addEventListener("click", () => {
+
     const amount = Number(btn.dataset.amount);
-    if (!amount || priceHistory.length < 2) return;
+    if (!amount) return;
 
-    // Erstes & letztes Kursdatum
-    const buyPoint = priceHistory[0];
-    const currentPoint = priceHistory[priceHistory.length - 1];
+    const buy = priceHistory[0];
+    const now = priceHistory[priceHistory.length - 1];
 
-    const tokens = amount / buyPoint.price;
-    const currentValue = tokens * currentPoint.price;
-    const changePct = ((currentValue - amount) / amount) * 100;
+    const tokens = amount / buy.price;
+    const value = tokens * now.price;
+    const change = ((value - amount) / amount) * 100;
 
-    // Anzeige füllen
     $("res-amount").textContent = formatEUR(amount);
-    $("res-date").textContent = buyPoint.date;
-    $("res-buy-price").textContent = formatPrice(buyPoint.price);
-    $("res-current-price").textContent = formatPrice(currentPoint.price);
-    $("res-value").textContent = formatEUR(currentValue);
+    $("res-date").textContent = buy.date;
+    $("res-buy-price").textContent = formatPrice(buy.price);
+    $("res-current-price").textContent = formatPrice(now.price);
+    $("res-value").textContent = formatEUR(value);
     $("res-change").textContent =
-      (changePct >= 0 ? "+" : "") + changePct.toFixed(2).replace(".", ",") + " %";
+      (change >= 0 ? "+" : "") + change.toFixed(2).replace(".", ",") + " %";
 
-    // Sektionen sichtbar machen
     resultSection.hidden = false;
     chartSection.hidden = false;
 
-    // Chart zeichnen
     drawChart(amount);
   });
 });
@@ -88,17 +86,12 @@ function drawChart(amount) {
     data: {
       labels,
       datasets: [{
-        label: "Wert der Investition (€)",
         data: values,
-        tension: 0.3,
-        fill: false
+        tension: 0.3
       }]
     },
     options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         y: {
           ticks: {
@@ -109,5 +102,5 @@ function drawChart(amount) {
     }
   });
 }
-</script>
+
 });
