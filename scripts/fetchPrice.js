@@ -8,16 +8,21 @@ const supabase = createClient(
 const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
+  const PAIR_ADDRESS = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
+
   const res = await fetch(
-    "https://api.coingecko.com/api/v3/simple/price?ids=ligone&vs_currencies=eur"
+    `https://api.dexscreener.com/latest/dex/pairs/polygon/${PAIR_ADDRESS}`
   );
-
   const data = await res.json();
-  const price = Number(data?.ligone?.eur);
 
-  if (!price) {
+  const priceUsd = Number(data?.pair?.priceUsd);
+  if (!priceUsd) {
     throw new Error("Preis konnte nicht geladen werden");
   }
+
+  // konservative USD → EUR Umrechnung
+  const EUR_RATE = 0.92;
+  const price = priceUsd * EUR_RATE;
 
   const { data: existing } = await supabase
     .from("ligone_prices")
@@ -33,7 +38,7 @@ async function run() {
   const { error } = await supabase.from("ligone_prices").insert({
     date: today,
     price_eur: price,
-    source: "coingecko"
+    source: "dexscreener"
   });
 
   if (error) throw error;
