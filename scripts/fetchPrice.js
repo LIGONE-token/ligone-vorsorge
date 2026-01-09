@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -8,18 +8,17 @@ const supabase = createClient(
 const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
-  // 1️⃣ Preis holen (Beispiel: Aggregator)
   const res = await fetch(
     "https://api.coingecko.com/api/v3/simple/price?ids=ligone&vs_currencies=eur"
   );
-  const data = await res.json();
 
-  const price = Number(data.ligone?.eur);
+  const data = await res.json();
+  const price = Number(data?.ligone?.eur);
+
   if (!price) {
-    throw new Error("Kein gültiger Preis");
+    throw new Error("Preis konnte nicht geladen werden");
   }
 
-  // 2️⃣ Prüfen, ob Tag schon existiert
   const { data: existing } = await supabase
     .from("ligone_prices")
     .select("date")
@@ -31,7 +30,6 @@ async function run() {
     return;
   }
 
-  // 3️⃣ Speichern
   const { error } = await supabase.from("ligone_prices").insert({
     date: today,
     price_eur: price,
@@ -44,6 +42,6 @@ async function run() {
 }
 
 run().catch(err => {
-  console.error(err);
+  console.error("FEHLER:", err.message);
   process.exit(1);
 });
