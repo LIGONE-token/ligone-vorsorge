@@ -15,13 +15,12 @@ async function run() {
   );
   const data = await res.json();
 
-  const priceUsd = Number(data?.pair?.priceUsd);
+  const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
   if (!priceUsd) {
     throw new Error("Preis konnte nicht geladen werden");
   }
 
-  // konservative USD → EUR Umrechnung
-  const EUR_RATE = 0.92;
+  const EUR_RATE = 0.92; // konservativ
   const price = priceUsd * EUR_RATE;
 
   const { data: existing } = await supabase
