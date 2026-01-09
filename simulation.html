@@ -5,7 +5,135 @@
   <title>Investitionsverlauf verstehen | LIGONE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <meta name="descr<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Investitionsverlauf ab Start | LIGONE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <meta name="description"
+        content="Erlebe realistisch, wie sich eine Investition ab deinem Start entwickelt – auf Basis echter Tages-Schlusskurse. Keine Rückrechnung. Keine Prognose.">
+
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<main class="simulation">
+
+  <!-- ===================== HEAD ===================== -->
+  <header class="simulation-head">
+    <h1>Investitionsverlauf ab deinem Start</h1>
+    <p class="subtitle">
+      Diese Simulation begleitet eine Investition so,
+      wie sie sich mit echtem Geld entwickeln würde.
+    </p>
+  </header>
+
+  <!-- ===================== GRUNDHINWEIS ===================== -->
+  <section class="simulation-note">
+    <p>
+      <strong>Wichtig:</strong><br>
+      Diese Seite zeigt keine rückwirkende Entwicklung.
+      Der Verlauf beginnt erst, wenn nach deinem Start
+      reale Tages-Schlusskurse vorliegen.
+      <br>
+      Keine Anlageberatung. Keine Prognose.
+    </p>
+  </section>
+
+  <!-- ===================== STARTINFO ===================== -->
+  <section class="start-info">
+    <h2>Dein Start</h2>
+    <ul>
+      <li>Startdatum: <strong id="startDateDisplay">–</strong></li>
+      <li>Status: <strong id="startStatus">Noch kein Kurs verfügbar</strong></li>
+    </ul>
+    <p class="helper">
+      Der Einstieg wird mit dem nächsten verfügbaren
+      Tages-Schlusskurs nach deinem Start fixiert.
+    </p>
+  </section>
+
+  <!-- ===================== BETRAG ===================== -->
+  <section class="amount-select">
+    <h2>Betrag wählen</h2>
+    <p class="helper">
+      Kleine Beträge reichen aus, um reale Entwicklungen zu verstehen.
+    </p>
+
+    <div class="amount-buttons">
+      <button type="button" data-amount="5">5 €</button>
+      <button type="button" data-amount="10">10 €</button>
+      <button type="button" data-amount="50">50 €</button>
+      <button type="button" data-amount="100">100 €</button>
+    </div>
+  </section>
+
+  <!-- ===================== ERGEBNIS ===================== -->
+  <section class="simulation-result" hidden>
+    <h2>Deine Investition</h2>
+
+    <div class="result-grid">
+
+      <div class="result-block">
+        <h3>Einstieg</h3>
+        <ul>
+          <li>Investiert: <strong id="res-amount">–</strong></li>
+          <li>Einstiegskurs: <strong id="res-buy-price">–</strong></li>
+          <li>Kursdatum: <strong id="res-buy-date">–</strong></li>
+        </ul>
+      </div>
+
+      <div class="result-block">
+        <h3>Aktueller Stand</h3>
+        <ul>
+          <li>Letzter Schlusskurs: <strong id="res-current-price">–</strong></li>
+          <li>Wert: <strong id="res-value">–</strong></li>
+          <li>Entwicklung: <strong id="res-change">–</strong></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <p class="helper" id="priceNote">
+      Grundlage sind jeweils die offiziellen Tages-Schlusskurse.
+    </p>
+  </section>
+
+  <!-- ===================== VERLAUF ===================== -->
+  <section class="simulation-chart" hidden>
+    <h2>Verlauf</h2>
+    <p class="helper">
+      Der Verlauf entsteht erst, wenn mindestens zwei
+      Tages-Schlusskurse vorliegen.
+    </p>
+
+    <div class="chart-wrapper">
+      <canvas id="investmentChart"></canvas>
+    </div>
+  </section>
+
+  <!-- ===================== ABSCHLUSS ===================== -->
+  <section class="simulation-footer">
+    <p>
+      Du kannst diese Simulation jederzeit nutzen, ohne etwas zu kaufen.
+      Sie dient ausschließlich dem realistischen Verständnis
+      von Investitionsverläufen.
+    </p>
+  </section>
+
+</main>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Simulation-Logik -->
+<script src="simulation.js"></script>
+
+</body>
+</html>
+iption"
         content="Verfolge, wie sich kleine Beträge auf Basis realer LIGONE-Kurse entwickelt hätten. Keine Prognose. Keine Anlageberatung.">
 
   <link rel="stylesheet" href="assets/style.css">
