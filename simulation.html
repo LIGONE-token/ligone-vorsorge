@@ -2,11 +2,11 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Virtuelle Vorsorge erleben | LIGONE</title>
+  <title>Investitionsverlauf verstehen | LIGONE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <meta name="description"
-        content="Erlebe finanzielle Vorsorge virtuell – ohne Risiko, ohne Einzahlung.">
+        content="Verfolge, wie sich kleine Beträge auf Basis realer LIGONE-Kurse entwickelt hätten. Keine Prognose. Keine Anlageberatung.">
 
   <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -14,264 +14,88 @@
 
 <main class="simulation">
 
-  <h1>Virtuelle Vorsorge erleben</h1>
+  <!-- ===================== HEAD ===================== -->
+  <header class="simulation-head">
+    <h1>Investitionsverlauf verstehen</h1>
+    <p class="subtitle">
+      Rückblickende Berechnung auf Basis realer historischer LIGONE-Kurse
+    </p>
+  </header>
 
-  <p class="intro">
-    Diese Simulation zeigt, wie sich langfristige Vorsorge mit kleinen,
-    regelmäßigen Beträgen anfühlen kann.
-    <br><strong>Kein Echtgeld. Keine Anlageberatung.</strong>
-  </p>
-
-  <!-- BETRAGSAUSWAHL -->
-  <section class="amount-select">
-    <h2>Monatlicher Vorsorgebetrag</h2>
-
-    <div class="amount-buttons">
-      <button data-amount="5">5 €</button>
-      <button data-amount="10" class="active">10 €</button>
-      <button data-amount="20">20 €</button>
-      <button data-amount="50">50 €</button>
-    </div>
-
-    <p class="hint">
-      Wähle einen Betrag, den du dir langfristig vorstellen kannst.
+  <!-- ===================== HINWEIS ===================== -->
+  <section class="simulation-note">
+    <p>
+      <strong>Hinweis:</strong>
+      Diese Simulation stellt keine Anlageberatung dar und macht
+      keine Aussage über zukünftige Entwicklungen.
+      Sie zeigt ausschließlich eine rückblickende Berechnung
+      auf Basis verfügbarer Kursdaten.
     </p>
   </section>
 
-  <!-- DASHBOARD -->
-  <section class="dashboard">
-    <div class="card">
-      <span class="label">Virtuelle Einzahlungen</span>
-      <strong id="totalPaid">0 €</strong>
-    </div>
+  <!-- ===================== BETRAG ===================== -->
+  <section class="amount-select">
+    <h2>Betrag auswählen</h2>
+    <p class="helper">
+      Auch kleine Beträge reichen aus, um Kursverläufe zu verstehen.
+    </p>
 
-    <div class="card">
-      <span class="label">Virtueller Wert heute</span>
-      <strong id="currentValue">0 €</strong>
-    </div>
-
-    <div class="card">
-      <span class="label">Zeitraum</span>
-      <strong id="months">0 Monate</strong>
+    <div class="amount-buttons">
+      <button data-amount="5">5 €</button>
+      <button data-amount="10">10 €</button>
+      <button data-amount="50">50 €</button>
+      <button data-amount="100">100 €</button>
     </div>
   </section>
 
-  <!-- MARKTPREISE -->
-<section class="market-box">
-  <div>
-  Letzter Marktpreis:
-  <strong id="priceToday">–</strong>
-  <span id="priceDate" style="opacity:.6;font-size:.85em"></span>
-</div>
+  <!-- ===================== ERGEBNIS ===================== -->
+  <section class="simulation-result" hidden>
+    <h2>Dein hypothetischer Verlauf</h2>
 
-  <div>Preis gestern: <strong id="priceYesterday">–</strong></div>
-  <div>Veränderung: <strong id="priceChange">–</strong></div>
-</section>
+    <div class="result-grid">
 
+      <div class="result-block">
+        <h3>Investition</h3>
+        <ul>
+          <li>Investiert: <strong id="res-amount">–</strong></li>
+          <li>Kaufdatum: <strong id="res-date">–</strong></li>
+          <li>Kaufkurs: <strong id="res-buy-price">–</strong></li>
+        </ul>
+      </div>
 
+      <div class="result-block">
+        <h3>Aktueller Stand</h3>
+        <ul>
+          <li>Aktueller Kurs: <strong id="res-current-price">–</strong></li>
+          <li>Aktueller Wert: <strong id="res-value">–</strong></li>
+          <li>Veränderung: <strong id="res-change">–</strong></li>
+        </ul>
+      </div>
 
-  <!-- ZEITSTEUERUNG -->
-  <section class="time-control">
-    <h2>Zeitraum simulieren</h2>
-
-    <input type="range" min="1" max="240" value="12" id="timeRange">
-    <div class="range-label">
-      <span>1 Monat</span>
-      <span>20 Jahre</span>
     </div>
   </section>
 
-  <!-- HINWEIS -->
-  <section class="notice">
+  <!-- ===================== CHART ===================== -->
+  <section class="simulation-chart" hidden>
+    <h2>Verlauf über die Zeit</h2>
+    <p class="chart-note">
+      Darstellung des Investitionswertes auf Basis realer Kursdaten.
+    </p>
+
+    <div class="chart-wrapper">
+      <canvas id="investmentChart"></canvas>
+    </div>
+  </section>
+
+  <!-- ===================== ABSCHLUSS ===================== -->
+  <section class="simulation-footer">
     <p>
-      Diese Darstellung ist eine <strong>Simulation</strong>.
-      Sie zeigt keine Prognose und kein Renditeversprechen.
-      Sie dient ausschließlich dem Verständnis von Zeit, Beständigkeit
-      und Vorsorge.
+      Du kannst diese Simulation jederzeit nutzen, ohne etwas zu kaufen.
+      Sie dient ausschließlich dem besseren Verständnis von Kursverläufen.
     </p>
   </section>
 
 </main>
-
-<script>
-/* ====== BASISPARAMETER ====== */
-let monthlyAmount = 10;
-let months = 12;
-
-/* ====== SUPABASE ====== */
-const SUPABASE_URL = "https://thrdlycfwlsegriduqvw.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_JHb4LBhP26eI7BgDS1jIkw_4OYn3-F9";
-const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* ====== ELEMENTE ====== */
-const totalPaidEl = document.getElementById("totalPaid");
-const currentValueEl = document.getElementById("currentValue");
-const monthsEl = document.getElementById("months");
-const timeRange = document.getElementById("timeRange");
-const buttons = document.querySelectorAll(".amount-buttons button");
-
-const priceTodayEl = document.getElementById("priceToday");
-const priceYesterdayEl = document.getElementById("priceYesterday");
-const priceChangeEl = document.getElementById("priceChange");
-
-/* ====== PRICE CACHE ====== */
-let priceRows = [];           // [{date:"YYYY-MM-DD", price_eur: "0.000..."}, ...]
-let priceMap = new Map();     // dateStr -> Number(price)
-let lastPriceToday = null;
-let lastPriceYesterday = null;
-
-/* ====== HELPERS ====== */
-function fmtEUR(x, decimals = 8) {
-  const n = Number(x);
-  if (!Number.isFinite(n)) return "–";
-  return n.toFixed(decimals) + " €";
-}
-
-function toDateStr(d) {
-  return d.toISOString().slice(0, 10);
-}
-
-function addMonths(date, deltaMonths) {
-  const d = new Date(date.getTime());
-  const day = d.getDate();
-  d.setMonth(d.getMonth() + deltaMonths);
-
-  // falls Monatswechsel (z.B. 31.) -> auf letzten Tag clampen
-  if (d.getDate() !== day) {
-    d.setDate(0);
-  }
-  return d;
-}
-
-// findet Preis am Datum; wenn nicht vorhanden: sucht rückwärts max. 14 Tage (Markt inaktiv / fehlender Tag)
-function getPriceWithFallback(dateStr) {
-  if (priceMap.has(dateStr)) return priceMap.get(dateStr);
-
-  // fallback: bis zu 14 Tage zurück
-  let d = new Date(dateStr + "T00:00:00Z");
-  for (let i = 0; i < 14; i++) {
-    d.setUTCDate(d.getUTCDate() - 1);
-    const s = toDateStr(d);
-    if (priceMap.has(s)) return priceMap.get(s);
-  }
-  return null;
-}
-
-/* ====== LOAD PRICES (bis zu 20 Jahre) ====== */
-async function loadPriceHistory() {
-  const today = new Date();
-  const start = addMonths(today, -240); // 20 Jahre zurück
-  const startStr = toDateStr(start);
-
-  const { data, error } = await supabase
-    .from("ligone_prices")
-    .select("date, price_eur")
-    .gte("date", startStr)
-    .order("date", { ascending: true });
-
-  if (error) {
-    console.error("Supabase Select Error:", error);
-    return false;
-  }
-  if (!data || data.length === 0) {
-    console.error("Keine Preisdaten gefunden.");
-    return false;
-  }
-
-  priceRows = data;
-  priceMap = new Map();
-  for (const r of priceRows) {
-    const p = Number(r.price_eur);
-    if (Number.isFinite(p)) priceMap.set(r.date, p);
-  }
-
-  return true;
-}
-
-/* ====== MARKET BOX (heute/gestern) ====== */
-function updateMarketBox() {
-  if (!priceRows.length) return;
-
-  const last = priceRows[priceRows.length - 1];
-  const prev = priceRows.length >= 2 ? priceRows[priceRows.length - 2] : last;
-
-  const pToday = Number(last.price_eur);
-  const pYesterday = Number(prev.price_eur);
-
-  if (!Number.isFinite(pToday) || !Number.isFinite(pYesterday)) return;
-
-  lastPriceToday = pToday;
-  lastPriceYesterday = pYesterday;
-
-  const diff = pToday - pYesterday;
-  const diffPct = pYesterday ? (diff / pYesterday) * 100 : 0;
-
-  priceTodayEl.textContent = fmtEUR(pToday, 8);
-  priceYesterdayEl.textContent = fmtEUR(pYesterday, 8);
-  priceChangeEl.textContent =
-    (diff >= 0 ? "+" : "") + diff.toFixed(8) + " € (" + diffPct.toFixed(2) + "%)";
-}
-
-/* ====== VIRTUELLE WALLET SIMULATION (DCA) ====== */
-function calcVirtualHoldings(monthlyAmount, months) {
-  if (!lastPriceToday || !Number.isFinite(lastPriceToday)) return { totalPaid: 0, holdings: 0, valueToday: 0 };
-
-  const today = new Date();
-  let holdings = 0;
-
-  // Wir simulieren: jeden Monat am heutigen Tag-of-month wird „gekauft“
-  for (let i = 0; i < months; i++) {
-    const d = addMonths(today, -i);
-    const ds = toDateStr(d);
-    const price = getPriceWithFallback(ds);
-
-    if (price && price > 0) {
-      holdings += (monthlyAmount / price);
-    } else {
-      // wenn wirklich gar kein Preis verfügbar ist -> wir überspringen diesen Monat (selten)
-      // (kann z.B. bei ganz frischem Token passieren)
-    }
-  }
-
-  const totalPaid = monthlyAmount * months;
-  const valueToday = holdings * lastPriceToday;
-
-  return { totalPaid, holdings, valueToday };
-}
-
-function updateSimulationUI() {
-  const { totalPaid, valueToday } = calcVirtualHoldings(monthlyAmount, months);
-
-  totalPaidEl.textContent = totalPaid.toLocaleString("de-DE") + " €";
-  currentValueEl.textContent = valueToday.toLocaleString("de-DE", { maximumFractionDigits: 2 }) + " €";
-  monthsEl.textContent = months + " Monate";
-}
-
-/* ====== EVENTS ====== */
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    buttons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    monthlyAmount = Number(btn.dataset.amount);
-    updateSimulationUI();
-  });
-});
-
-timeRange.addEventListener("input", e => {
-  months = Number(e.target.value);
-  updateSimulationUI();
-});
-
-/* ====== INIT ====== */
-(async function init() {
-  const ok = await loadPriceHistory();
-  if (!ok) return;
-
-  updateMarketBox();
-  updateSimulationUI();
-})();
-</script>
-
 
 </body>
 </html>
