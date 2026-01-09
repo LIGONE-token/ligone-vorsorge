@@ -56,6 +56,15 @@
     </div>
   </section>
 
+  <!-- MARKTPREISE -->
+<section class="market-box">
+  <div>Preis heute: <strong id="priceToday">–</strong></div>
+  <div>Preis gestern: <strong id="priceYesterday">–</strong></div>
+  <div>Veränderung: <strong id="priceChange">–</strong></div>
+</section>
+
+
+
   <!-- ZEITSTEUERUNG -->
   <section class="time-control">
     <h2>Zeitraum simulieren</h2>
@@ -121,6 +130,50 @@ timeRange.addEventListener("input", e => {
 
 /* INIT */
 updateSimulation();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://thrdlycfwlsegriduqvw.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_JHb4LBhP26eI7BgDS1jIkw_4OYn3-F9";
+
+const supabase = supabaseJs.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+async function loadMarketPrices() {
+  const { data, error } = await supabase
+    .from("ligone_prices")
+    .select("date, price_eur")
+    .order("date", { ascending: false })
+    .limit(2);
+
+  if (error || !data || data.length === 0) {
+    console.error("Preise konnten nicht geladen werden");
+    return;
+  }
+
+  const today = data[0];
+  const yesterday = data[1] || data[0];
+
+  const diff = today.price_eur - yesterday.price_eur;
+  const diffPct = yesterday.price_eur
+    ? (diff / yesterday.price_eur) * 100
+    : 0;
+
+  document.getElementById("priceToday").textContent =
+    today.price_eur.toFixed(8) + " €";
+
+  document.getElementById("priceYesterday").textContent =
+    yesterday.price_eur.toFixed(8) + " €";
+
+  document.getElementById("priceChange").textContent =
+    (diff >= 0 ? "+" : "") +
+    diff.toFixed(8) + " € (" +
+    diffPct.toFixed(2) + "%)";
+}
+
+loadMarketPrices();
 </script>
 
 </body>
