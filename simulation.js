@@ -1,21 +1,42 @@
 document.addEventListener("DOMContentLoaded", () => {
 
 /* =====================================================
-   LIGONE – Simulation (Basis-Logik)
+   LIGONE – Investitionssimulation (FINAL)
+   Modell: Echtstart, Tages-Schlusskurse, kein Rückblick
 ===================================================== */
 
-/* ====== TEST-KURSDATEN ====== */
-const priceHistory = [
-  { date: "2025-12-01", price: 0.00000110 },
-  { date: "2025-12-10", price: 0.00000118 },
-  { date: "2025-12-20", price: 0.00000115 },
-  { date: "2025-12-31", price: 0.00000122 },
-  { date: "2026-01-05", price: 0.00000128 }
-];
+/* ====== KONFIG ====== */
 
-/* ====== HELPERS ====== */
+// HIER später echte Quelle einsetzen (z. B. Supabase / Cron)
+// Aktuell: Platzhalter für letzten bekannten Tages-Schlusskurs
+let lastDailyClose = null;       // number
+let lastDailyCloseDate = null;   // "YYYY-MM-DD"
+
+// gespeicherter Verlauf ab Einstieg
+let priceHistory = []; // [{ date, close }]
+
+// Investment-Zustand
+let investmentAmount = null;
+let entryPrice = null;
+let entryDate = null;
+let tokenAmount = null;
+
+/* ====== ELEMENTE ====== */
 const $ = id => document.getElementById(id);
 
+const startDateDisplay = $("startDateDisplay");
+const startStatus      = $("startStatus");
+
+const resultSection = document.querySelector(".simulation-result");
+const chartSection  = document.querySelector(".simulation-chart");
+
+const amountButtons = document.querySelectorAll(".amount-buttons button");
+
+/* ====== STARTDATUM = HEUTE ====== */
+const today = new Date().toISOString().slice(0, 10);
+startDateDisplay.textContent = today;
+
+/* ====== FORMAT ====== */
 function formatEUR(v) {
   return Number(v).toLocaleString("de-DE", {
     minimumFractionDigits: 2,
@@ -24,60 +45,124 @@ function formatEUR(v) {
 }
 
 function formatPrice(v) {
-  return v.toLocaleString("de-DE", {
+  return Number(v).toLocaleString("de-DE", {
     minimumFractionDigits: 8,
     maximumFractionDigits: 8
   });
 }
 
-/* ====== ELEMENTE ====== */
-const amountButtons = document.querySelectorAll(".amount-buttons button");
-const resultSection = document.querySelector(".simulation-result");
-const chartSection  = document.querySelector(".simulation-chart");
+/* =====================================================
+   KURSLOGIK (REALISTISCH)
+   - Es gibt nur Tages-Schlusskurse
+   - Einstieg erst, wenn ein Close existiert
+===================================================== */
 
-/* ====== SICHERHEIT ====== */
-if (!amountButtons.length) {
-  console.error("❌ Keine Betrag-Buttons gefunden");
-  return;
+/*
+  Diese Funktion MUSS später durch echte Daten ersetzt werden.
+  Erwartet:
+  - close: number
+  - date:  YYYY-MM-DD
+*/
+async function loadLatestDailyClose() {
+  /*
+    BEISPIEL (Platzhalter):
+    lastDailyClose = 0.00000123;
+    lastDailyCloseDate = "2026-02-03";
+  */
+
+  // --- TEMPORÄRER DEMO-WERT ---
+  lastDailyClose = 0.00000123;
+  lastDailyCloseDate = today;
 }
 
-/* ====== LOGIK ====== */
+/* =====================================================
+   INVESTMENT START
+===================================================== */
+
 amountButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
+  btn.addEventListener("click", async () => {
 
     const amount = Number(btn.dataset.amount);
     if (!amount) return;
 
-    const buy = priceHistory[0];
-    const now = priceHistory[priceHistory.length - 1];
+    // Kurs laden (falls noch nicht vorhanden)
+    if (!lastDailyClose) {
+      await loadLatestDailyClose();
+    }
 
-    const tokens = amount / buy.price;
-    const value = tokens * now.price;
-    const change = ((value - amount) / amount) * 100;
+    // Wenn immer noch kein Schlusskurs da ist → warten
+    if (!lastDailyClose || !lastDailyCloseDate) {
+      startStatus.textContent =
+        "Noch kein Tages-Schlusskurs verfügbar";
+      return;
+    }
 
-    $("res-amount").textContent = formatEUR(amount);
-    $("res-date").textContent = buy.date;
-    $("res-buy-price").textContent = formatPrice(buy.price);
-    $("res-current-price").textContent = formatPrice(now.price);
-    $("res-value").textContent = formatEUR(value);
-    $("res-change").textContent =
-      (change >= 0 ? "+" : "") + change.toFixed(2).replace(".", ",") + " %";
+    // Einstieg nur EINMAL setzen
+    if (!entryPrice) {
+      investmentAmount = amount;
+      entryPrice = lastDailyClose;
+      entryDate  = lastDailyCloseDate;
+      tokenAmount = investmentAmount / entryPrice;
 
-    resultSection.hidden = false;
-    chartSection.hidden = false;
+      priceHistory.push({
+        date: entryDate,
+        close: entryPrice
+      });
 
-    drawChart(amount);
+      startStatus.textContent = "Aktiv (Einstieg erfolgt)";
+    }
+
+    updateResult();
+    updateChart();
   });
 });
 
-/* ====== CHART ====== */
-let chart;
+/* =====================================================
+   ANZEIGE
+===================================================== */
 
-function drawChart(amount) {
-  const ctx = document.getElementById("investmentChart").getContext("2d");
+function updateResult() {
+  $("res-amount").textContent = formatEUR(investmentAmount);
+  $("res-buy-price").textContent =
+    formatPrice(entryPrice) + " (Schlusskurs)";
+  $("res-buy-date").textContent = entryDate;
+
+  const currentValue = tokenAmount * lastDailyClose;
+  const changePct =
+    ((currentValue - investmentAmount) / investmentAmount) * 100;
+
+  $("res-current-price").textContent =
+    formatPrice(lastDailyClose) + " (letzter Schlusskurs)";
+  $("res-value").textContent = formatEUR(currentValue);
+  $("res-change").textContent =
+    (changePct >= 0 ? "+" : "") +
+    changePct.toFixed(2).replace(".", ",") + " %";
+
+  resultSection.hidden = false;
+}
+
+/* =====================================================
+   CHART (erst ab 2 Schlusskursen)
+===================================================== */
+
+let chart = null;
+
+function updateChart() {
+  if (priceHistory.length < 2) {
+    chartSection.hidden = true;
+    return;
+  }
+
+  chartSection.hidden = false;
+
+  const ctx = document
+    .getElementById("investmentChart")
+    .getContext("2d");
 
   const labels = priceHistory.map(p => p.date);
-  const values = priceHistory.map(p => (amount / priceHistory[0].price) * p.price);
+  const values = priceHistory.map(p =>
+    tokenAmount * p.close
+  );
 
   if (chart) chart.destroy();
 
@@ -91,7 +176,9 @@ function drawChart(amount) {
       }]
     },
     options: {
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false }
+      },
       scales: {
         y: {
           ticks: {
