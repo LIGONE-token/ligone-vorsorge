@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
 /* =====================================================
-   LIGONE – Investitionssimulation (FINAL)
+   LIGONE – Investitionssimulation (STABIL / FINAL)
    Realistisch | Tages-Schlusskurse | localStorage
 ===================================================== */
 
@@ -67,28 +67,39 @@ function saveSimulation() {
 
 function loadSimulation() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return false;
+  if (!raw) {
+    startStatus.textContent =
+      "Marktstart – wartet auf ersten Tages-Schlusskurs";
+    return false;
+  }
 
   try {
     const d = JSON.parse(raw);
 
-    investmentAmount   = d.investmentAmount;
-    entryPrice         = d.entryPrice;
-    entryDate          = d.entryDate;
-    tokenAmount        = d.tokenAmount;
-    priceHistory       = d.priceHistory || [];
-    lastDailyClose     = d.lastDailyClose;
-    lastDailyCloseDate = d.lastDailyCloseDate;
+    investmentAmount   = Number(d.investmentAmount);
+    entryPrice         = Number(d.entryPrice);
+    entryDate          = d.entryDate || null;
+    tokenAmount        = Number(d.tokenAmount);
+    priceHistory       = Array.isArray(d.priceHistory) ? d.priceHistory : [];
+    lastDailyClose     = Number(d.lastDailyClose);
+    lastDailyCloseDate = d.lastDailyCloseDate || null;
 
-    startStatus.textContent =
-      "Aktiv · letzter Schlusskurs vom " + lastDailyCloseDate;
+    if (lastDailyClose && lastDailyCloseDate && entryPrice) {
+      startStatus.textContent =
+        "Aktiv · letzter Schlusskurs vom " + lastDailyCloseDate;
+      updateResult();
+      updateChart();
+    } else {
+      startStatus.textContent =
+        "Marktstart – wartet auf ersten Tages-Schlusskurs";
+    }
 
-    updateResult();
-    updateChart();
     return true;
 
   } catch (e) {
     console.error("Simulation konnte nicht geladen werden", e);
+    startStatus.textContent =
+      "Marktstart – wartet auf ersten Tages-Schlusskurs";
     return false;
   }
 }
@@ -98,10 +109,10 @@ window.resetSimulation = function () {
   location.reload();
 };
 
-/* ================== KURSQUELLE (PLATZHALTER) ================== */
+/* ================== KURSQUELLE (DEMO / PLATZHALTER) ================== */
 
 async function loadLatestDailyClose() {
-  // ⚠️ DEMO / PLATZHALTER – wird später durch echte Tages-Closes ersetzt
+  // ⚠️ Platzhalter – später durch echte Tages-Schlusskurse ersetzen
   lastDailyClose = 0.00000123;
   lastDailyCloseDate = today;
 }
@@ -114,18 +125,17 @@ amountButtons.forEach(btn => {
     const amount = Number(btn.dataset.amount);
     if (!amount) return;
 
-    if (!lastDailyClose) {
+    if (!lastDailyClose || !lastDailyCloseDate) {
       await loadLatestDailyClose();
     }
 
-    // ❗ RICHTIGER STATUS, solange kein Schlusskurs existiert
     if (!lastDailyClose || !lastDailyCloseDate) {
       startStatus.textContent =
         "Wartet auf nächsten Tages-Schlusskurs";
       return;
     }
 
-    // Einstieg nur einmal
+    // Einstieg nur einmal fixieren
     if (!entryPrice) {
       investmentAmount = amount;
       entryPrice = lastDailyClose;
@@ -151,7 +161,7 @@ amountButtons.forEach(btn => {
 /* ================== ANZEIGE ================== */
 
 function updateResult() {
-  if (!entryPrice) return;
+  if (!entryPrice || !lastDailyClose || !lastDailyCloseDate) return;
 
   $("res-amount").textContent = formatEUR(investmentAmount);
   $("res-buy-price").textContent =
