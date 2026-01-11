@@ -2,9 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 
-// fetch für Node (CommonJS)
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+// KEIN fetch-Import mehr!
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -98,7 +96,6 @@ async function run() {
   }
 }
 
-// ❗ NUR DAS steht außerhalb
 run().catch(err => {
   console.error("❌ FEHLER:", err.message);
   process.exit(1);
