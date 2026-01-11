@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 
 const supabase = createClient(
@@ -8,63 +10,92 @@ const supabase = createClient(
 const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
-  // ✅ LIG1 / WPOL PAIR-ADRESSE (LIVE-Preis!)
+  /* ===============================
+     1️⃣ LIVE PREIS AUS DEM PAIR
+     =============================== */
+
   const PAIR_ADDRESS = "0x9046f148f7dbc35881cddbeeefd56fcff1810445";
 
-  // ✅ DexScreener PAIR-Endpoint (LIVE!)
-  const res = await fetch(
+  const dexRes = await fetch(
     `https://api.dexscreener.com/latest/dex/pairs/polygon/${PAIR_ADDRESS}`
   );
+  if (!dexRes.ok) throw new Error("DexScreener API nicht erreichbar");
 
-  if (!res.ok) {
-    throw new Error("DexScreener API nicht erreichbar");
-  }
+  const dexData = await dexRes.json();
+  const priceUsd = Number(dexData?.pairs?.[0]?.priceUsd);
+  if (!priceUsd || priceUsd <= 0)
+    throw new Error("LIVE priceUsd ungültig");
 
-  const data = await res.json();
+  /* ===============================
+     2️⃣ LIVE EUR → USD
+     =============================== */
 
-  // ✅ LIVE-Preis direkt aus dem Pool
-  const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
+  const fxRes = await fetch(
+    "https://api.exchangerate.host/latest?base=EUR&symbols=USD"
+  );
+  if (!fxRes.ok) throw new Error("FX API nicht erreichbar");
 
-  if (!priceUsd || priceUsd <= 0) {
-    throw new Error("LIVE-Preis konnte nicht geladen werden");
-  }
+  const fxData = await fxRes.json();
+  const eurUsd = Number(fxData?.rates?.USD);
+  if (!eurUsd || eurUsd <= 0)
+    throw new Error("EUR/USD Kurs ungültig");
 
-  console.log("LIVE priceUsd:", priceUsd);
+  /* ===============================
+     3️⃣ BERECHNUNGEN
+     =============================== */
 
-  // 👉 AB HIER kannst du weiterrechnen:
-  // z. B. EUR/USD live holen, JSON schreiben, etc.
-}
+  const ligPerEuro = Math.floor(eurUsd / priceUsd);
+  const priceEur = priceUsd / eurUsd;
 
+  /* ===============================
+     4️⃣ LIVE JSON (IMMER)
+     =============================== */
 
-  // konservative USD → EUR Umrechnung
-  const EUR_RATE = 0.92;
-  const price = priceUsd * EUR_RATE;
+  const liveResult = {
+    ligPerEuro,
+    priceUsd,
+    priceEur,
+    eurUsd,
+    source: "LIVE DexScreener LIG1/WPOL",
+    pair: PAIR_ADDRESS,
+    updated: new Date().toISOString()
+  };
 
-  // prüfen, ob heutiger Preis schon existiert
+  const jsonPath = path.resolve(
+    __dirname,
+    "../../ligone-web/data/buy-price.json"
+  );
+
+  fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
+
+  console.log("✅ LIVE Buy-Preis aktualisiert:", ligPerEuro);
+
+  /* ===============================
+     5️⃣ TAGESPREIS SPEICHERN (1×)
+     =============================== */
+
   const { data: existing } = await supabase
     .from("ligone_prices")
     .select("date")
     .eq("date", today)
     .maybeSingle();
 
-  if (existing) {
-    console.log("Preis für heute existiert bereits");
-    return;
+  if (!existing) {
+    const { error } = await supabase.from("ligone_prices").insert({
+      date: today,
+      price_eur: priceEur,
+      price_usd: priceUsd,
+      source: "dexscreener-live"
+    });
+
+    if (error) throw error;
+    console.log("📊 Tagespreis gespeichert:", today, priceEur);
+  } else {
+    console.log("ℹ️ Tagespreis existiert bereits:", today);
   }
-
-  // speichern
-  const { error } = await supabase.from("ligone_prices").insert({
-    date: today,
-    price_eur: price,
-    source: "dexscreener"
-  });
-
-  if (error) throw error;
-
-  console.log("Preis gespeichert:", today, price);
 }
 
 run().catch(err => {
-  console.error("FEHLER:", err.message);
+  console.error("❌ FEHLER:", err.message);
   process.exit(1);
 });
