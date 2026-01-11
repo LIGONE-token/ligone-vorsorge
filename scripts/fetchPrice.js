@@ -68,6 +68,8 @@ if (!eurUsd || eurUsd <= 0)
     __dirname,
     "../../ligone-web/data/buy-price.json"
   );
+// Ordner sicherstellen
+fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
 
   fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
   console.log("✅ LIVE Buy-Preis aktualisiert:", ligPerEuro);
