@@ -19,7 +19,8 @@ jobs:
           node-version: 20
 
       - name: Install deps
-        run: npm install @supabase/supabase-js
+  run: npm install @supabase/supabase-js node-fetch
+
 
       - name: Run price fetch
         run: node scripts/fetchPrice.js
