@@ -2,6 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 
+// fetch für Node (CommonJS)
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -67,7 +71,6 @@ async function run() {
   );
 
   fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
-
   console.log("✅ LIVE Buy-Preis aktualisiert:", ligPerEuro);
 
   /* ===============================
@@ -95,6 +98,7 @@ async function run() {
   }
 }
 
+// ❗ NUR DAS steht außerhalb
 run().catch(err => {
   console.error("❌ FEHLER:", err.message);
   process.exit(1);
