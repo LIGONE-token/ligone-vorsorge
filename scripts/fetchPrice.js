@@ -8,20 +8,33 @@ const supabase = createClient(
 const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
-  // ✅ DEINE TOKEN-ADRESSE (ohne Klammern, ohne Zusätze)
-  const TOKEN_ADDRESS = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
+  // ✅ LIG1 / WPOL PAIR-ADRESSE (LIVE-Preis!)
+  const PAIR_ADDRESS = "0x9046f148f7dbc35881cddbeeefd56fcff1810445";
 
-  // ✅ DexScreener TOKEN-Endpoint (richtig!)
+  // ✅ DexScreener PAIR-Endpoint (LIVE!)
   const res = await fetch(
-    `https://api.dexscreener.com/latest/dex/tokens/${TOKEN_ADDRESS}`
+    `https://api.dexscreener.com/latest/dex/pairs/polygon/${PAIR_ADDRESS}`
   );
+
+  if (!res.ok) {
+    throw new Error("DexScreener API nicht erreichbar");
+  }
+
   const data = await res.json();
 
-  // ✅ Preis aus dem liquidesten Pair
+  // ✅ LIVE-Preis direkt aus dem Pool
   const priceUsd = Number(data?.pairs?.[0]?.priceUsd);
-  if (!priceUsd) {
-    throw new Error("Preis konnte nicht geladen werden");
+
+  if (!priceUsd || priceUsd <= 0) {
+    throw new Error("LIVE-Preis konnte nicht geladen werden");
   }
+
+  console.log("LIVE priceUsd:", priceUsd);
+
+  // 👉 AB HIER kannst du weiterrechnen:
+  // z. B. EUR/USD live holen, JSON schreiben, etc.
+}
+
 
   // konservative USD → EUR Umrechnung
   const EUR_RATE = 0.92;
