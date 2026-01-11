@@ -33,14 +33,15 @@ async function run() {
      =============================== */
 
   const fxRes = await fetch(
-    "https://api.exchangerate.host/latest?base=EUR&symbols=USD"
-  );
-  if (!fxRes.ok) throw new Error("FX API nicht erreichbar");
+  "https://open.er-api.com/v6/latest/EUR"
+);
+if (!fxRes.ok) throw new Error("FX API nicht erreichbar");
 
-  const fxData = await fxRes.json();
-  const eurUsd = Number(fxData?.rates?.USD);
-  if (!eurUsd || eurUsd <= 0)
-    throw new Error("EUR/USD Kurs ungültig");
+const fxData = await fxRes.json();
+const eurUsd = Number(fxData?.rates?.USD);
+if (!eurUsd || eurUsd <= 0)
+  throw new Error("EUR/USD Kurs ungültig");
+
 
   /* ===============================
      3️⃣ BERECHNUNGEN
