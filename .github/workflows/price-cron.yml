@@ -5,6 +5,8 @@ on:
     - cron: "0 * * * *"   # einmal pro Stunde, zur vollen Stunde
   workflow_dispatch:
 
+permissions:
+  contents: write
 
 jobs:
   fetch-price:
