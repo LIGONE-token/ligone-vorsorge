@@ -22,9 +22,14 @@ async function run() {
   if (!dexRes.ok) throw new Error("DexScreener API nicht erreichbar");
 
   const dexData = await dexRes.json();
-  const priceUsd = Number(dexData?.pairs?.[0]?.priceUsd);
-  if (!priceUsd || priceUsd <= 0)
-    throw new Error("LIVE priceUsd ungültig");
+  const rawPriceUsd = dexData?.pairs?.[0]?.priceUsd;
+const priceUsd = Number(rawPriceUsd);
+
+if (!priceUsd || priceUsd <= 0) {
+  console.warn("⚠️ DexScreener liefert keinen LIVE-Preis – letzter Wert bleibt aktiv");
+  return; // Workflow NICHT abbrechen!
+}
+
 
   /* ===============================
      2️⃣ FX: EUR → USD
