@@ -2,8 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 
-// KEIN fetch-Import mehr!
-
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -13,7 +11,7 @@ const today = new Date().toISOString().slice(0, 10);
 
 async function run() {
   /* ===============================
-     1️⃣ LIVE PREIS AUS DEM PAIR
+     1️⃣ LIVE PREIS AUS DEM PAIR (USD)
      =============================== */
 
   const PAIR_ADDRESS = "0x9046f148f7dbc35881cddbeeefd56fcff1810445";
@@ -29,29 +27,26 @@ async function run() {
     throw new Error("LIVE priceUsd ungültig");
 
   /* ===============================
-     2️⃣ LIVE EUR → USD
+     2️⃣ FX: EUR → USD
      =============================== */
 
-  const fxRes = await fetch(
-  "https://open.er-api.com/v6/latest/EUR"
-);
-if (!fxRes.ok) throw new Error("FX API nicht erreichbar");
+  const fxRes = await fetch("https://open.er-api.com/v6/latest/EUR");
+  if (!fxRes.ok) throw new Error("FX API nicht erreichbar");
 
-const fxData = await fxRes.json();
-const eurUsd = Number(fxData?.rates?.USD);
-if (!eurUsd || eurUsd <= 0)
-  throw new Error("EUR/USD Kurs ungültig");
-
+  const fxData = await fxRes.json();
+  const eurUsd = Number(fxData?.rates?.USD);
+  if (!eurUsd || eurUsd <= 0)
+    throw new Error("EUR/USD Kurs ungültig");
 
   /* ===============================
      3️⃣ BERECHNUNGEN
      =============================== */
 
-  const ligPerEuro = Math.floor(eurUsd / priceUsd);
   const priceEur = priceUsd / eurUsd;
+  const ligPerEuro = Math.floor(1 / priceEur);
 
   /* ===============================
-     4️⃣ LIVE JSON (IMMER)
+     4️⃣ LIVE JSON (für Anwendungen)
      =============================== */
 
   const liveResult = {
@@ -64,16 +59,9 @@ if (!eurUsd || eurUsd <= 0)
     updated: new Date().toISOString()
   };
 
-  const jsonPath = path.resolve(
-  __dirname,
-  "../data/buy-price.json"
-);
-
-// Ordner sicherstellen
-fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
-
-// Datei schreiben
-fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
+  const jsonPath = path.resolve(__dirname, "../data/buy-price.json");
+  fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
+  fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
 
   console.log("✅ LIVE Buy-Preis aktualisiert:", ligPerEuro);
 
@@ -91,12 +79,11 @@ fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
     const { error } = await supabase.from("ligone_prices").insert({
       date: today,
       price_eur: priceEur,
-      price_usd: priceUsd,
-      source: "dexscreener-live"
+      source: "dexscreener_usd_fx"
     });
 
     if (error) throw error;
-    console.log("📊 Tagespreis gespeichert:", today, priceEur);
+    console.log("📊 Tagespreis gespeichert (EUR):", today, priceEur);
   } else {
     console.log("ℹ️ Tagespreis existiert bereits:", today);
   }
