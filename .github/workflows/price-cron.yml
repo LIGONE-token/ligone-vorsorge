@@ -2,8 +2,9 @@ name: Daily LIGONE Price
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 * * * *"   # einmal pro Stunde, zur vollen Stunde
   workflow_dispatch:
+
 
 jobs:
   fetch-price:
