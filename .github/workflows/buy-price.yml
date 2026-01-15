@@ -1,0 +1,28 @@
+name: Update LIG1 Buy Price
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install ethers
+
+      - run: node scripts/fetchBuyPrice.js
+
+      - run: |
+          git config user.name "ligone-bot"
+          git config user.email "bot@ligone.io"
+          git add data/buy-price.json
+          git commit -m "Update real LIG1 buy price" || echo "No changes"
+          git push
