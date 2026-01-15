@@ -1,9 +1,9 @@
 {
-  "ligPerEuro": 708288,
+  "ligPerEuro": 708094,
   "priceUsd": 0.000001645,
-  "priceEur": 0.0000014118535620335839,
-  "eurUsd": 1.165135,
+  "priceEur": 0.0000014122414288964342,
+  "eurUsd": 1.164815,
   "source": "LIVE DexScreener LIG1/WPOL",
   "pair": "0x9046f148f7dbc35881cddbeeefd56fcff1810445",
-  "updated": "2026-01-14T23:16:20.763Z"
+  "updated": "2026-01-15T01:24:55.803Z"
 }
