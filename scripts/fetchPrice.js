@@ -13,7 +13,8 @@ const USDC = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 const LIG1 = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
 
 // Sicherheitsfaktor: wir rechnen mit 1.02 €, runden dann runter
-const EURO_BUFFER = 1.02;
+const EURO_VALUE = 1.0;
+
 
 // ================== ABI ==================
 const ROUTER_ABI = [
@@ -35,8 +36,12 @@ const ROUTER_ABI = [
   }
 
   // 2️⃣ 1 € ⇒ POL (USDC ≈ €)
-  const polForOneEuro = EURO_BUFFER / usdcPerPol;
-  const polAmountWei = ethers.parseEther(polForOneEuro.toString());
+  const polForOneEuro = EURO_VALUE / usdcPerPol;
+
+  const polAmountWei = ethers.parseEther(
+  polForOneEuro.toFixed(18)
+);
+
 
   // 3️⃣ POL → LIG1 (echter Swap-Quote)
   const polToLig = await router.getAmountsOut(polAmountWei, [WPOL, LIG1]);
