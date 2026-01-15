@@ -1,100 +1,67 @@
-const fs = require("fs");
-const path = require("path");
-const { createClient } = require("@supabase/supabase-js");
+import { ethers } from "ethers";
+import fs from "fs";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// ================== KONFIG ==================
+const RPC_URL = "https://polygon-rpc.com";
 
-const today = new Date().toISOString().slice(0, 10);
+// Uniswap / Quickswap Router (Polygon, V2-kompatibel)
+const ROUTER = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
 
-async function run() {
-  /* ===============================
-     1️⃣ LIVE PREIS AUS DEM PAIR (USD)
-     =============================== */
+// Token-Adressen
+const WPOL = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"; // intern für POL
+const USDC = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+const LIG1 = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
 
-  const PAIR_ADDRESS = "0x9046f148f7dbc35881cddbeeefd56fcff1810445";
+// Sicherheitsfaktor: wir rechnen mit 1.02 €, runden dann runter
+const EURO_BUFFER = 1.02;
 
-  const dexRes = await fetch(
-    `https://api.dexscreener.com/latest/dex/pairs/polygon/${PAIR_ADDRESS}`
-  );
-  if (!dexRes.ok) throw new Error("DexScreener API nicht erreichbar");
+// ================== ABI ==================
+const ROUTER_ABI = [
+  "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)"
+];
 
-  const dexData = await dexRes.json();
-  const rawPriceUsd = dexData?.pairs?.[0]?.priceUsd;
-const priceUsd = Number(rawPriceUsd);
+// ================== SCRIPT ==================
+(async () => {
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
 
-if (!priceUsd || priceUsd <= 0) {
-  console.warn("⚠️ DexScreener liefert keinen LIVE-Preis – letzter Wert bleibt aktiv");
-  return; // Workflow NICHT abbrechen!
-}
+  // 1️⃣ POL/USDC → wie viel USDC für 1 POL?
+  const onePOL = ethers.parseEther("1");
+  const polToUsdc = await router.getAmountsOut(onePOL, [WPOL, USDC]);
+  const usdcPerPol = Number(ethers.formatUnits(polToUsdc[1], 6));
 
+  if (!usdcPerPol || usdcPerPol <= 0) {
+    throw new Error("POL/USDC Preis ungültig");
+  }
 
-  /* ===============================
-     2️⃣ FX: EUR → USD
-     =============================== */
+  // 2️⃣ 1 € ⇒ POL (USDC ≈ €)
+  const polForOneEuro = EURO_BUFFER / usdcPerPol;
+  const polAmountWei = ethers.parseEther(polForOneEuro.toString());
 
-  const fxRes = await fetch("https://open.er-api.com/v6/latest/EUR");
-  if (!fxRes.ok) throw new Error("FX API nicht erreichbar");
+  // 3️⃣ POL → LIG1 (echter Swap-Quote)
+  const polToLig = await router.getAmountsOut(polAmountWei, [WPOL, LIG1]);
+  const ligOut = Number(ethers.formatUnits(polToLig[1], 18));
 
-  const fxData = await fxRes.json();
-  const eurUsd = Number(fxData?.rates?.USD);
-  if (!eurUsd || eurUsd <= 0)
-    throw new Error("EUR/USD Kurs ungültig");
+  if (!ligOut || ligOut <= 0) {
+    throw new Error("POL → LIG1 Quote ungültig");
+  }
 
-  /* ===============================
-     3️⃣ BERECHNUNGEN
-     =============================== */
+  // 4️⃣ defensiv abrunden
+  const ligPerEuro = Math.floor(ligOut);
 
-  const priceEur = priceUsd / eurUsd;
-  const ligPerEuro = Math.floor(1 / priceEur);
-
-  /* ===============================
-     4️⃣ LIVE JSON (für Anwendungen)
-     =============================== */
-
-  const liveResult = {
+  // 5️⃣ JSON schreiben
+  const result = {
     ligPerEuro,
-    priceUsd,
-    priceEur,
-    eurUsd,
-    source: "LIVE DexScreener LIG1/WPOL",
-    pair: PAIR_ADDRESS,
-    updated: new Date().toISOString()
+    input: "1 EUR ≈ POL (via POL/USDC)",
+    router: "Uniswap V2 (Polygon)",
+    rounding: "floor (defensiv)",
+    updatedAt: new Date().toISOString()
   };
 
-  const jsonPath = path.resolve(__dirname, "../data/buy-price.json");
-  fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
-  fs.writeFileSync(jsonPath, JSON.stringify(liveResult, null, 2));
+  fs.writeFileSync(
+    "data/buy-price.json",
+    JSON.stringify(result, null, 2)
+  );
 
-  console.log("✅ LIVE Buy-Preis aktualisiert:", ligPerEuro);
-
-  /* ===============================
-     5️⃣ TAGESPREIS SPEICHERN (1×)
-     =============================== */
-
-  const { data: existing } = await supabase
-    .from("ligone_prices")
-    .select("date")
-    .eq("date", today)
-    .maybeSingle();
-
-  if (!existing) {
-    const { error } = await supabase.from("ligone_prices").insert({
-      date: today,
-      price_eur: priceEur,
-      source: "dexscreener_usd_fx"
-    });
-
-    if (error) throw error;
-    console.log("📊 Tagespreis gespeichert (EUR):", today, priceEur);
-  } else {
-    console.log("ℹ️ Tagespreis existiert bereits:", today);
-  }
-}
-
-run().catch(err => {
-  console.error("❌ FEHLER:", err.message);
-  process.exit(1);
-});
+  console.log("✅ LIG1 Buy-Preis aktualisiert:", ligPerEuro);
+})();
