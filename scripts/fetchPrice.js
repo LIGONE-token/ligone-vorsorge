@@ -5,7 +5,7 @@ const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
 // QuickSwap Factory & Pair
 const FACTORY = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
 const WPOL = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
-const LIG1 = "0xDaf8744329067B5a2b10A5DFca1c916E099b66d2";
+const LIG1 = "0x92B3677ae2EA7c19aa4fA56936d11be99BcaC37d";
 
 const factoryAbi = [
   "function getPair(address,address) external view returns (address)"
