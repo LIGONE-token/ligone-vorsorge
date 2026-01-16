@@ -40,3 +40,16 @@ if (token0.toLowerCase() === WPOL.toLowerCase()) {
 }
 
 console.log("✅ LIGONE Preis (POL):", price);
+
+const ligPerEuro = 1 / priceEUR;
+
+fs.writeFileSync(
+  "data/buy-price.json",
+  JSON.stringify({
+    price_pol: pricePOL,
+    price_eur: priceEUR,
+    ligPerEuro,
+    updated: new Date().toISOString()
+  }, null, 2)
+);
+
