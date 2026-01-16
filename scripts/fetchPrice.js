@@ -41,7 +41,10 @@ if (token0.toLowerCase() === WPOL.toLowerCase()) {
   price = Number(r1) / Number(r0);
 }
 
-console.log("✅ LIGONE Preis (POL):", price);
+// Preis pro 1 LIG1 in POL (aus Pool / Quote)
+const pricePOL = priceInPOL;
+
+console.log("✅ LIGONE Preis (POL):", pricePOL);
 
 // =========================
 // POL → EUR holen
