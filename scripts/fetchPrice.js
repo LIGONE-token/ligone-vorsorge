@@ -43,7 +43,27 @@ if (token0.toLowerCase() === WPOL.toLowerCase()) {
 
 console.log("✅ LIGONE Preis (POL):", price);
 
+// =========================
+// POL → EUR holen
+// =========================
+const fxRes = await fetch(
+  "https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=eur",
+  { cache: "no-store" }
+);
+
+const fxData = await fxRes.json();
+const polEur = fxData["polygon-ecosystem-token"]?.eur;
+
+if (!polEur || polEur <= 0) {
+  throw new Error("POL/EUR Preis nicht verfügbar");
+}
+
+// Preis pro LIG1 in EUR
+const priceEUR = pricePOL * polEur;
+
+// LIG1 pro 1 €
 const ligPerEuro = 1 / priceEUR;
+
 
 fs.writeFileSync(
   "data/buy-price.json",
