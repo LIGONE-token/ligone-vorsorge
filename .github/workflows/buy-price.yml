@@ -18,7 +18,7 @@ jobs:
 
       - run: npm install ethers
 
-      - run: node scripts/fetchBuyPrice.js
+      - run: node scripts/fetchPrice.js
 
       - run: |
           git config user.name "ligone-bot"
