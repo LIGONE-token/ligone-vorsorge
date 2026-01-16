@@ -1,72 +1,42 @@
 import { ethers } from "ethers";
-import fs from "fs";
 
-// ================== KONFIG ==================
-const RPC_URL = "https://polygon-rpc.com";
+const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
 
-// Uniswap / Quickswap Router (Polygon, V2-kompatibel)
-const ROUTER = "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff";
+// QuickSwap Factory & Pair
+const FACTORY = "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32";
+const WPOL = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
+const LIG1 = "0xDaf8744329067B5a2b10A5DFca1c916E099b66d2";
 
-// Token-Adressen
-const WPOL = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"; // intern für POL
-const USDC = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-const LIG1 = "0xdaf8744329067b5a2b10a5dfca1c916e099b66d2";
-
-// Sicherheitsfaktor: wir rechnen mit 1.02 €, runden dann runter
-const EURO_VALUE = 1.0;
-
-
-// ================== ABI ==================
-const ROUTER_ABI = [
-  "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)"
+const factoryAbi = [
+  "function getPair(address,address) external view returns (address)"
 ];
 
-// ================== SCRIPT ==================
-(async () => {
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
+const pairAbi = [
+  "function getReserves() view returns (uint112,uint112,uint32)",
+  "function token0() view returns (address)",
+  "function token1() view returns (address)"
+];
 
-  // 1️⃣ POL/USDC → wie viel USDC für 1 POL?
-  const onePOL = ethers.parseEther("1");
-  const polToUsdc = await router.getAmountsOut(onePOL, [WPOL, USDC]);
-  const usdcPerPol = Number(ethers.formatUnits(polToUsdc[1], 6));
+const factory = new ethers.Contract(FACTORY, factoryAbi, provider);
 
-  if (!usdcPerPol || usdcPerPol <= 0) {
-    throw new Error("POL/USDC Preis ungültig");
-  }
+const pairAddress = await factory.getPair(WPOL, LIG1);
 
-  // 2️⃣ 1 € ⇒ POL (USDC ≈ €)
-  const polForOneEuro = EURO_VALUE / usdcPerPol;
+if (pairAddress === ethers.ZeroAddress) {
+  console.log("⛔ Kein Pool vorhanden");
+  process.exit(0);
+}
 
-  const polAmountWei = ethers.parseEther(
-  polForOneEuro.toFixed(18)
-);
+const pair = new ethers.Contract(pairAddress, pairAbi, provider);
 
+const [r0, r1] = await pair.getReserves();
+const token0 = await pair.token0();
 
-  // 3️⃣ POL → LIG1 (echter Swap-Quote)
-  const polToLig = await router.getAmountsOut(polAmountWei, [WPOL, LIG1]);
-  const ligOut = Number(ethers.formatUnits(polToLig[1], 18));
+let price;
 
-  if (!ligOut || ligOut <= 0) {
-    throw new Error("POL → LIG1 Quote ungültig");
-  }
+if (token0.toLowerCase() === WPOL.toLowerCase()) {
+  price = Number(r0) / Number(r1);
+} else {
+  price = Number(r1) / Number(r0);
+}
 
-  // 4️⃣ defensiv abrunden
-  const ligPerEuro = Math.floor(ligOut);
-
-  // 5️⃣ JSON schreiben
-  const result = {
-    ligPerEuro,
-    input: "1 EUR ≈ POL (via POL/USDC)",
-    router: "Uniswap V2 (Polygon)",
-    rounding: "floor (defensiv)",
-    updatedAt: new Date().toISOString()
-  };
-
-  fs.writeFileSync(
-    "data/buy-price.json",
-    JSON.stringify(result, null, 2)
-  );
-
-  console.log("✅ LIG1 Buy-Preis aktualisiert:", ligPerEuro);
-})();
+console.log("✅ LIGONE Preis (POL):", price);
