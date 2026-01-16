@@ -1,3 +1,5 @@
+console.log("🚨 REBUILD BUY-PRICE", new Date().toISOString());
+
 import { ethers } from "ethers";
 
 const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
@@ -52,4 +54,5 @@ fs.writeFileSync(
     updated: new Date().toISOString()
   }, null, 2)
 );
+console.log("🚨 WRITE DONE", new Date().toISOString());
 
