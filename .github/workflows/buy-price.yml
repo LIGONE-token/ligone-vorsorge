@@ -16,13 +16,8 @@ jobs:
         with:
           node-version: 20
 
-      - run: npm install ethers
+      - name: Install deps
+        run: npm install ethers
 
-      - run: node scripts/fetchPrice.js
-
-      - run: |
-          git config user.name "ligone-bot"
-          git config user.email "bot@ligone.io"
-          git add data/buy-price.json
-          git commit -m "Update real LIG1 buy price" || echo "No changes"
-          git push
+      - name: Run buy price script
+        run: node scripts/fetchprice.js
