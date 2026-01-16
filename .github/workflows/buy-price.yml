@@ -10,14 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Debug – list files
-        run: |
-          echo "ROOT:"
-          ls -la
-          echo ""
-          echo "SCRIPTS:"
-          ls -la scripts || echo "scripts folder not found"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,4 +18,4 @@ jobs:
         run: npm install ethers
 
       - name: Run buy price script
-        run: node scripts/fetchprice.js
+        run: node scripts/fetchPrice.js
