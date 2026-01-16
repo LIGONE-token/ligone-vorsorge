@@ -7,3 +7,16 @@
   "pair": "0x9046f148f7dbc35881cddbeeefd56fcff1810445",
   "updated": "2026-01-15T16:31:53.902Z"
 }
+fs.writeFileSync(
+  "data/buy-price.json",
+  JSON.stringify({
+    ligPerEuro: Math.floor(ligPerEuro),
+    pricePOL,
+    priceEUR,
+    polEur,
+    source: "UNISWAP_V2_POOL_RECALC",
+    updated: new Date().toISOString()
+  }, null, 2)
+);
+
+console.log("✅ ligPerEuro (NEU):", Math.floor(ligPerEuro));
