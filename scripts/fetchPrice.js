@@ -25,11 +25,10 @@ const POOL_ABI = [
   const pool = new ethers.Contract(POOL, POOL_ABI, provider);
 
   // Pool-Daten
-  const [slot0, token0, token1] = await Promise.all([
-    pool.slot0(),
-    pool.token0(),
-    pool.token1()
-  ]);
+  const slot0 = await pool.slot0();
+const token0 = await pool.token0();
+const token1 = await pool.token1();
+
 
   const sqrtPriceX96 = slot0.sqrtPriceX96;
 
