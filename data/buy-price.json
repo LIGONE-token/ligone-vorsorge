@@ -1,22 +1,6 @@
 {
-  "ligPerEuro": 745243,
-  "priceUsd": 0.000001563,
-  "priceEur": 0.0000013418439838085876,
-  "eurUsd": 1.164815,
-  "source": "LIVE DexScreener LIG1/WPOL",
-  "pair": "0x9046f148f7dbc35881cddbeeefd56fcff1810445",
-  "updated": "2026-01-15T16:31:53.902Z"
+  "ligPerEuro": 79298,
+  "price_eur": 0.000012610635179351329,
+  "source": "QuickSwap POL/LIG1 + CoinGecko POL/EUR",
+  "updatedAt": "2026-01-17T07:55:35.081Z"
 }
-fs.writeFileSync(
-  "data/buy-price.json",
-  JSON.stringify({
-    ligPerEuro: Math.floor(ligPerEuro),
-    pricePOL,
-    priceEUR,
-    polEur,
-    source: "UNISWAP_V2_POOL_RECALC",
-    updated: new Date().toISOString()
-  }, null, 2)
-);
-
-console.log("✅ ligPerEuro (NEU):", Math.floor(ligPerEuro));
