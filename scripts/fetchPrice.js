@@ -4,7 +4,8 @@ import fs from "fs";
 console.log("🚨 REBUILD BUY-PRICE (EXACT UNISWAP POOL)", new Date().toISOString());
 
 // RPC (Polygon)
-const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
+const provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/polygon");
+
 
 // 🔒 DEIN UNISWAP V3 POOL (FIX)
 const POOL = "0x358404f64dbfe2e63f76d7a66b11be7de11061a2";
