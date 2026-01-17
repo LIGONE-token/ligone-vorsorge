@@ -70,7 +70,6 @@ const ligPerEuro = 1 / priceEUR;
 fs.writeFileSync(
   "data/buy-price.json",
   JSON.stringify({
-    price_pol: pricePOL,
     price_eur: priceEUR,
     ligPerEuro,
     updated: new Date().toISOString()
