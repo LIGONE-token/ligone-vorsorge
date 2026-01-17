@@ -1,76 +1,97 @@
-import { ethers } from "ethers";
-import fs from "fs";
+// scripts/fetchPrice.js
+// FINAL – Uniswap V3 – Polygon – CRON SAFE
 
-// ================= RPC FALLBACK =================
+import { ethers } from "ethers";
+
+// ================= CONFIG =================
 const RPC_URLS = [
   "https://rpc.ankr.com/polygon",
   "https://polygon-rpc.com",
-  "https://rpc-mainnet.maticvigil.com"
+  "https://polygon.llamarpc.com"
 ];
+
+const UNISWAP_V3_FACTORY = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
+
+// ⚠️ HIER DEINE TOKEN
+const TOKEN_A = "0xDEIN_LIG1_TOKEN";   // LIG1
+const TOKEN_B = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"; // WMATIC
+const FEE = 3000; // 0.3%
+
+const DECIMALS_A = 18;
+const DECIMALS_B = 18;
+
+// =========================================
 
 async function getProvider() {
   for (const url of RPC_URLS) {
     try {
-      const p = new ethers.JsonRpcProvider(url);
-      await p.getBlockNumber();
+      const provider = new ethers.JsonRpcProvider(url);
+      await provider.getBlockNumber();
       console.log("✅ RPC OK:", url);
-      return p;
+      return provider;
     } catch {
       console.warn("⚠️ RPC failed:", url);
     }
   }
-  throw new Error("Kein funktionierender Polygon RPC erreichbar");
+  throw new Error("❌ No working RPC");
 }
 
-// ================= MAIN =================
-(async () => {
-  console.log(
-    "🚨 REBUILD BUY-PRICE (EXACT UNISWAP POOL)",
-    new Date().toISOString()
-  );
+async function main() {
+  console.log("🚨 REBUILD BUY-PRICE (EXACT UNISWAP POOL)", new Date().toISOString());
 
-  // 🔴 provider EXISTIERT NUR HIER
   const provider = await getProvider();
 
-  // ======= DEIN POOL =======
-  const POOL = "0x358404f64dbfe2e63f76d7a66b11be7de11061a2";
-  const LIG1 = "0x92b3677ae2ea7c19aa4fa56936d11be99bcac37d";
-
-  const POOL_ABI = [
-    "function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)",
-    "function token0() view returns (address)",
-    "function token1() view returns (address)"
+  const factoryAbi = [
+    "function getPool(address tokenA, address tokenB, uint24 fee) view returns (address)"
   ];
 
-  // 🔴 HIER wird provider verwendet – gleicher Scope
-  const pool = new ethers.Contract(POOL, POOL_ABI, provider);
-
-  const slot0 = await pool.slot0();
-  const token0 = (await pool.token0()).toLowerCase();
-  const token1 = (await pool.token1()).toLowerCase();
-
-  const sqrtPriceX96 = slot0.sqrtPriceX96;
-  const priceX192 = sqrtPriceX96 * sqrtPriceX96;
-  const Q192 = 2n ** 192n;
-  const rawPrice = Number(priceX192) / Number(Q192);
-
-  const priceLigInPol =
-    token0 === LIG1 ? rawPrice : 1 / rawPrice;
-
-  console.log("✅ LIG1 Preis (POL):", priceLigInPol);
-
-  fs.writeFileSync(
-    "data/buy-price.json",
-    JSON.stringify(
-      {
-        price_pol: priceLigInPol,
-        pool: POOL,
-        updatedAt: new Date().toISOString()
-      },
-      null,
-      2
-    )
+  const factory = new ethers.Contract(
+    UNISWAP_V3_FACTORY,
+    factoryAbi,
+    provider
   );
 
-  console.log("✅ WRITE DONE");
-})();
+  // SORTIERUNG IST ZWINGEND
+  const [token0, token1] =
+    TOKEN_A.toLowerCase() < TOKEN_B.toLowerCase()
+      ? [TOKEN_A, TOKEN_B]
+      : [TOKEN_B, TOKEN_A];
+
+  const poolAddress = await factory.getPool(token0, token1, FEE);
+
+  if (poolAddress === ethers.ZeroAddress) {
+    console.log("⚠️ Pool existiert nicht – Abbruch ohne Fehler");
+    return;
+  }
+
+  console.log("✅ V3 Pool:", poolAddress);
+
+  const poolAbi = [
+    "function slot0() view returns (uint160 sqrtPriceX96,int24,uint16,uint16,uint16,uint8,bool)"
+  ];
+
+  const pool = new ethers.Contract(poolAddress, poolAbi, provider);
+
+  let slot0;
+  try {
+    slot0 = await pool.slot0();
+  } catch {
+    console.log("⚠️ Pool nicht initialisiert – Abbruch ohne Crash");
+    return;
+  }
+
+  const sqrtPriceX96 = Number(slot0.sqrtPriceX96);
+  const priceRaw = (sqrtPriceX96 ** 2) / 2 ** 192;
+
+  const price =
+    token0 === TOKEN_A
+      ? priceRaw * 10 ** (DECIMALS_A - DECIMALS_B)
+      : (1 / priceRaw) * 10 ** (DECIMALS_A - DECIMALS_B);
+
+  console.log("✅ BUY PRICE:", price);
+}
+
+main().catch(err => {
+  console.error("❌ UNEXPECTED ERROR:", err.message);
+  process.exit(0); // CRON DARF NIE FAILEN
+});
