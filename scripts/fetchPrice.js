@@ -42,7 +42,6 @@ if (token0.toLowerCase() === WPOL.toLowerCase()) {
 }
 
 // Preis pro 1 LIG1 in POL (aus Pool / Quote)
-const pricePOL = priceInPOL;
 
 console.log("✅ LIGONE Preis (POL):", pricePOL);
 
