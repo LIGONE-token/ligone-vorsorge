@@ -1,11 +1,13 @@
 import { ethers } from "ethers";
 import fs from "fs";
 
+const RPC_URLS = [
+  "https://rpc.ankr.com/polygon",
+  "https://polygon-rpc.com",
+  "https://rpc-mainnet.maticvigil.com"
+];
+
 console.log("🚨 REBUILD BUY-PRICE (EXACT UNISWAP POOL)", new Date().toISOString());
-
-// RPC (Polygon)
-const provider = new ethers.JsonRpcProvider("https://polygon.llamarpc.com");
-
 
 // 🔒 DEIN UNISWAP V3 POOL (FIX)
 const POOL = "0x358404f64dbfe2e63f76d7a66b11be7de11061a2";
