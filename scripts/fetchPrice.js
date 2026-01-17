@@ -5,15 +5,13 @@ console.log("🚨 REBUILD BUY-PRICE (UNISWAP ONLY)", new Date().toISOString());
 
 const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
 
-// 🔒 UNISWAP V2 ROUTER (Polygon)
+// UNISWAP V2 ROUTER (Polygon) – lowercase, OHNE checksum
 const ROUTER = "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
 
-// Tokens
-const WPOL = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
-const USDC = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-const LIG1 = "0x92B3677ae2EA7c19aa4fA56936d11be99BcaC37d";
+const WPOL = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
+const USDC = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
+const LIG1 = "0x92b3677ae2ea7c19aa4fa56936d11be99bcac37d";
 
-// ABI
 const ROUTER_ABI = [
   "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)"
 ];
@@ -21,7 +19,7 @@ const ROUTER_ABI = [
 (async () => {
   const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
 
-  // 1️⃣ POL → USDC (1 POL)
+  // 1 POL → USDC
   const onePOL = ethers.parseEther("1");
   const polToUsdc = await router.getAmountsOut(onePOL, [WPOL, USDC]);
   const usdcPerPol = Number(ethers.formatUnits(polToUsdc[1], 6));
@@ -30,11 +28,11 @@ const ROUTER_ABI = [
     throw new Error("UNISWAP: POL/USDC Quote ungültig");
   }
 
-  // 2️⃣ 1 € ≈ 1 USDC ⇒ POL
+  // 1 € ≈ 1 USDC → POL
   const polForOneEuro = 1 / usdcPerPol;
   const polAmountWei = ethers.parseEther(polForOneEuro.toFixed(18));
 
-  // 3️⃣ POL → LIG1 (UNISWAP QUOTE – UI-identisch)
+  // POL → LIG1
   const polToLig = await router.getAmountsOut(polAmountWei, [WPOL, LIG1]);
   const ligOut = Number(ethers.formatUnits(polToLig[1], 18));
 
@@ -42,7 +40,6 @@ const ROUTER_ABI = [
     throw new Error("UNISWAP: POL → LIG1 Quote ungültig");
   }
 
-  // 4️⃣ defensiv abrunden
   const ligPerEuro = Math.floor(ligOut);
 
   fs.writeFileSync(
@@ -51,8 +48,7 @@ const ROUTER_ABI = [
       {
         ligPerEuro,
         source: "UNISWAP V2 ROUTER (Polygon)",
-        path: "POL → LIG1",
-        rounding: "floor (defensiv)",
+        rounding: "floor",
         updatedAt: new Date().toISOString()
       },
       null,
