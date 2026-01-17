@@ -1,4 +1,7 @@
 name: Daily LIGONE Price
+concurrency:
+  group: ligone-price
+  cancel-in-progress: true
 
 on:
   schedule:
