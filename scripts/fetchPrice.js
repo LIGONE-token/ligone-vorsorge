@@ -6,7 +6,7 @@ console.log("🚨 REBUILD BUY-PRICE (UNISWAP ONLY)", new Date().toISOString());
 const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
 
 // UNISWAP V2 ROUTER (Polygon) – lowercase, OHNE checksum
-const ROUTER = "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
+const ROUTER = "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506";
 
 const WPOL = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
 const USDC = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
