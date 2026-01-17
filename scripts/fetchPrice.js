@@ -1,5 +1,10 @@
 // scripts/fetchPrice.js
 // FINAL – Uniswap V3 – Polygon – CRON SAFE
+// ⛔ Harter Not-Aus nach 90 Sekunden
+setTimeout(() => {
+  console.error("⛔ Global timeout – exiting");
+  process.exit(0); // Cron darf nie failen
+}, 90_000);
 
 import { ethers } from "ethers";
 
