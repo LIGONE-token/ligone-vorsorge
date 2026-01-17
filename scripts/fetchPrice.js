@@ -30,6 +30,7 @@ const token0 = await pool.token0();
 const token1 = await pool.token1();
 
 
+
   const sqrtPriceX96 = slot0.sqrtPriceX96;
 
   // Preisberechnung aus sqrtPriceX96
