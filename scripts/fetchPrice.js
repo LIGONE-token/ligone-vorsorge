@@ -7,6 +7,21 @@ const RPC_URLS = [
   "https://rpc-mainnet.maticvigil.com"
 ];
 
+async function getProvider() {
+  for (const url of RPC_URLS) {
+    try {
+      const p = new ethers.JsonRpcProvider(url);
+      await p.getBlockNumber();
+      console.log("✅ RPC OK:", url);
+      return p;
+    } catch {
+      console.warn("⚠️ RPC failed:", url);
+    }
+  }
+  throw new Error("Kein funktionierender Polygon RPC erreichbar");
+}
+
+
 console.log("🚨 REBUILD BUY-PRICE (EXACT UNISWAP POOL)", new Date().toISOString());
 
 // 🔒 DEIN UNISWAP V3 POOL (FIX)
