@@ -1,83 +1,64 @@
 import { ethers } from "ethers";
 import fs from "fs";
 
-console.log("🚨 REBUILD BUY-PRICE", new Date().toISOString());
+console.log("🚨 REBUILD BUY-PRICE (UNISWAP ONLY)", new Date().toISOString());
 
 const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
 
-// QuickSwap Factory & Tokens
-const FACTORY = "0x9e5A52f57b3038F1B8EeE45F28b3C1967e22799C";
+// 🔒 UNISWAP V2 ROUTER (Polygon)
+const ROUTER = "0x7a250d5630B4cF539739df2C5dAcb4c659F2488D";
+
+// Tokens
 const WPOL = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
+const USDC = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
 const LIG1 = "0x92B3677ae2EA7c19aa4fA56936d11be99BcaC37d";
 
-const factoryAbi = [
-  "function getPair(address,address) external view returns (address)"
+// ABI
+const ROUTER_ABI = [
+  "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)"
 ];
 
-const pairAbi = [
-  "function getReserves() view returns (uint112,uint112,uint32)",
-  "function token0() view returns (address)",
-  "function token1() view returns (address)"
-];
+(async () => {
+  const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
 
-// ---------- Pool holen ----------
-const factory = new ethers.Contract(FACTORY, factoryAbi, provider);
-const pairAddress = await factory.getPair(WPOL, LIG1);
+  // 1️⃣ POL → USDC (1 POL)
+  const onePOL = ethers.parseEther("1");
+  const polToUsdc = await router.getAmountsOut(onePOL, [WPOL, USDC]);
+  const usdcPerPol = Number(ethers.formatUnits(polToUsdc[1], 6));
 
-if (pairAddress === ethers.ZeroAddress) {
-  throw new Error("⛔ Kein POL/LIG1 Pool vorhanden");
-}
+  if (!usdcPerPol || usdcPerPol <= 0) {
+    throw new Error("UNISWAP: POL/USDC Quote ungültig");
+  }
 
-const pair = new ethers.Contract(pairAddress, pairAbi, provider);
-const [r0, r1] = await pair.getReserves();
-const token0 = await pair.token0();
+  // 2️⃣ 1 € ≈ 1 USDC ⇒ POL
+  const polForOneEuro = 1 / usdcPerPol;
+  const polAmountWei = ethers.parseEther(polForOneEuro.toFixed(18));
 
-// ---------- Preis LIG1 in POL ----------
-let pricePOL;
+  // 3️⃣ POL → LIG1 (UNISWAP QUOTE – UI-identisch)
+  const polToLig = await router.getAmountsOut(polAmountWei, [WPOL, LIG1]);
+  const ligOut = Number(ethers.formatUnits(polToLig[1], 18));
 
-if (token0.toLowerCase() === WPOL.toLowerCase()) {
-  // r0 = POL, r1 = LIG1
-  pricePOL = Number(r0) / Number(r1);
-} else {
-  // r1 = POL, r0 = LIG1
-  pricePOL = Number(r1) / Number(r0);
-}
+  if (!ligOut || ligOut <= 0) {
+    throw new Error("UNISWAP: POL → LIG1 Quote ungültig");
+  }
 
-if (!pricePOL || pricePOL <= 0) {
-  throw new Error("POL-Preis ungültig");
-}
+  // 4️⃣ defensiv abrunden
+  const ligPerEuro = Math.floor(ligOut);
 
-console.log("✅ LIG1 Preis (POL):", pricePOL);
+  fs.writeFileSync(
+    "data/buy-price.json",
+    JSON.stringify(
+      {
+        ligPerEuro,
+        source: "UNISWAP V2 ROUTER (Polygon)",
+        path: "POL → LIG1",
+        rounding: "floor (defensiv)",
+        updatedAt: new Date().toISOString()
+      },
+      null,
+      2
+    )
+  );
 
-// ---------- POL → EUR ----------
-const fxRes = await fetch(
-  "https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=eur",
-  { cache: "no-store" }
-);
-
-const fxData = await fxRes.json();
-const polEur = fxData["polygon-ecosystem-token"]?.eur;
-
-if (!polEur || polEur <= 0) {
-  throw new Error("POL/EUR Preis nicht verfügbar");
-}
-
-// ---------- Ergebnis ----------
-const priceEUR = pricePOL * polEur;
-const ligPerEuro = Math.floor(1 / priceEUR);
-
-fs.writeFileSync(
-  "data/buy-price.json",
-  JSON.stringify(
-    {
-      ligPerEuro,
-      price_eur: priceEUR,
-      source: "QuickSwap POL/LIG1 + CoinGecko POL/EUR",
-      updatedAt: new Date().toISOString()
-    },
-    null,
-    2
-  )
-);
-
-console.log("✅ WRITE DONE", new Date().toISOString());
+  console.log("✅ UNISWAP LIG1 pro €:", ligPerEuro);
+})();
