@@ -113,6 +113,31 @@ async function main() {
       : (1 / priceRaw) * 10 ** (DECIMALS_A - DECIMALS_B);
 
   console.log("✅ BUY PRICE:", price);
+   /* =====================================================
+   WMATIC → EUR
+===================================================== */
+
+const cg = await fetch(
+  "https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=eur"
+).then(r => r.json());
+
+const maticEur = cg["matic-network"].eur;
+
+/* =====================================================
+   LIG1 → EUR
+===================================================== */
+
+const priceEur = price * maticEur;
+const ligPerEuro = 1 / priceEur;
+
+const result = {
+  ligPerEuro: Math.round(ligPerEuro),
+  price_eur: priceEur,
+  source: "Uniswap V3 LIG1/WMATIC + CoinGecko WMATIC/EUR",
+  updatedAt: new Date().toISOString()
+};
+
+console.log(JSON.stringify(result, null, 2));
 
   // SOFORT sauber beenden (CRON SAFE)
   process.exit(0);
