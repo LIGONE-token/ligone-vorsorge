@@ -20,7 +20,7 @@ jobs:
 
       - run: mkdir -p ligone-vorsorge/data
 
-      - run: node scripts/update-price.js > ligone-vorsorge/data/buy-price.json
+      - run: node scripts/fetchPrice.js > ligone-vorsorge/data/buy-price.json
 
       - run: |
           git config user.name "price-bot"
