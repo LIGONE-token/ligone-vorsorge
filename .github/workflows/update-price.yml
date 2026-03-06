@@ -1,0 +1,28 @@
+name: Update LIG1 Price
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install node-fetch
+
+      - run: node scripts/update-price.js > ligone-vorsorge/data/buy-price.json
+
+      - run: |
+          git config user.name "price-bot"
+          git config user.email "bot@github.com"
+          git add ligone-vorsorge/data/buy-price.json
+          git commit -m "update price" || echo "no changes"
+          git push
